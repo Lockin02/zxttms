@@ -1,0 +1,178 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label for="c-oper_id" class="control-label col-xs-12 col-sm-2">{:__('Oper_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-oper_id" data-rule="required" data-source="oper/index" class="form-control selectpage" name="row[oper_id]" type="text" value="{$row.oper_id}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-timestamp" class="control-label col-xs-12 col-sm-2">{:__('Timestamp')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-timestamp" class="form-control" name="row[timestamp]" type="number" value="{$row.timestamp}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-product_id" class="control-label col-xs-12 col-sm-2">{:__('Product_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-product_id" data-rule="required" data-source="product/index" class="form-control selectpage" name="row[product_id]" type="text" value="{$row.product_id}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-BNet_Account" class="control-label col-xs-12 col-sm-2">{:__('Bnet_account')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-BNet_Account" class="form-control" name="row[BNet_Account]" type="text" value="{$row.BNet_Account}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-accNbr" class="control-label col-xs-12 col-sm-2">{:__('Accnbr')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-accNbr" class="form-control" name="row[accNbr]" type="text" value="{$row.accNbr}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-oper_type" class="control-label col-xs-12 col-sm-2">{:__('Oper_type')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-oper_type" class="form-control" name="row[oper_type]" type="text" value="{$row.oper_type}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-cust_code" class="control-label col-xs-12 col-sm-2">{:__('Cust_code')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cust_code" class="form-control" name="row[cust_code]" type="text" value="{$row.cust_code}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-contract_id" class="control-label col-xs-12 col-sm-2">{:__('Contract_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-contract_id" data-rule="required" data-source="contract/index" class="form-control selectpage" name="row[contract_id]" type="text" value="{$row.contract_id}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-cust_city_id" class="control-label col-xs-12 col-sm-2">{:__('Cust_city_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cust_city_id" data-rule="required" data-source="cust/city/index" class="form-control selectpage" name="row[cust_city_id]" type="text" value="{$row.cust_city_id}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-cust_install_addr" class="control-label col-xs-12 col-sm-2">{:__('Cust_install_addr')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cust_install_addr" class="form-control" name="row[cust_install_addr]" type="text" value="{$row.cust_install_addr}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-cust_name" class="control-label col-xs-12 col-sm-2">{:__('Cust_name')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cust_name" class="form-control" name="row[cust_name]" type="text" value="{$row.cust_name}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-cust_phone" class="control-label col-xs-12 col-sm-2">{:__('Cust_phone')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cust_phone" class="form-control" name="row[cust_phone]" type="text" value="{$row.cust_phone}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-contract_valid_date" class="control-label col-xs-12 col-sm-2">{:__('Contract_valid_date')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-contract_valid_date" class="form-control" name="row[contract_valid_date]" type="text" value="{$row.contract_valid_date}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-installer_name" class="control-label col-xs-12 col-sm-2">{:__('Installer_name')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-installer_name" class="form-control" name="row[installer_name]" type="text" value="{$row.installer_name}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-installer_phone" class="control-label col-xs-12 col-sm-2">{:__('Installer_phone')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-installer_phone" class="form-control" name="row[installer_phone]" type="text" value="{$row.installer_phone}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-product_mix" class="control-label col-xs-12 col-sm-2">{:__('Product_mix')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-product_mix" class="form-control" name="row[product_mix]" type="number" value="{$row.product_mix}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-pay_grade" class="control-label col-xs-12 col-sm-2">{:__('Pay_grade')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-pay_grade" class="form-control" name="row[pay_grade]" type="number" value="{$row.pay_grade}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-iTV_option" class="control-label col-xs-12 col-sm-2">{:__('Itv_option')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-iTV_option" class="form-control" name="row[iTV_option]" type="text" value="{$row.iTV_option}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-eTV_license_count" class="control-label col-xs-12 col-sm-2">{:__('Etv_license_count')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-eTV_license_count" class="form-control" name="row[eTV_license_count]" type="number" value="{$row.eTV_license_count}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-iTV_count" class="control-label col-xs-12 col-sm-2">{:__('Itv_count')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-iTV_count" class="form-control" name="row[iTV_count]" type="text" value="{$row.iTV_count}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-reply_status" class="control-label col-xs-12 col-sm-2">{:__('Reply_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-reply_status" class="form-control" name="row[reply_status]" type="number" value="{$row.reply_status}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-complete_time" class="control-label col-xs-12 col-sm-2">{:__('Complete_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-complete_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[complete_time]" type="text" value="{$row.complete_time|datetime}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-hashcode" class="control-label col-xs-12 col-sm-2">{:__('Hashcode')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-hashcode" class="form-control" name="row[hashcode]" type="text" value="{$row.hashcode}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-query_status" class="control-label col-xs-12 col-sm-2">{:__('Query_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-query_status" class="form-control" name="row[query_status]" type="number" value="{$row.query_status}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-setup_person_name" class="control-label col-xs-12 col-sm-2">{:__('Setup_person_name')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-setup_person_name" class="form-control" name="row[setup_person_name]" type="text" value="{$row.setup_person_name}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-setup_person_phone" class="control-label col-xs-12 col-sm-2">{:__('Setup_person_phone')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-setup_person_phone" class="form-control" name="row[setup_person_phone]" type="text" value="{$row.setup_person_phone}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-mac" class="control-label col-xs-12 col-sm-2">{:__('Mac')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-mac" class="form-control " rows="5" name="row[mac]" cols="50">{$row.mac}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-callback_time" class="control-label col-xs-12 col-sm-2">{:__('Callback_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-callback_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[callback_time]" type="text" value="{$row.callback_time|datetime}">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
