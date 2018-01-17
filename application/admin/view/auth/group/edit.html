@@ -27,6 +27,22 @@
             {:build_radios('row[status]', ['normal'=>__('Normal'), 'hidden'=>__('Hidden')], $row['status'])}
         </div>
     </div>
+    <div class="form-group">
+        <dl class="fieldlist" rel="{$row.condition|count}" data-name="row[groupcondition]">
+            <label for="content" class="control-label col-xs-12 col-sm-2">{:__('Groupcondition')}:</label>
+            <div class="col-xs-12 col-sm-8">
+                {foreach $row.condition as $key => $vo}
+                <dd class="form-inline">
+                    <input type="text" name="row[groupcondition][field][{$key}]" class="form-control" value="{$key}" size="10" />
+                    <input type="text" name="row[groupcondition][value][{$key}]" class="form-control" value="{$vo}" size="40" />
+                    <span class="btn btn-sm btn-danger btn-remove"><i class="fa fa-times"></i></span>
+                    <span class="btn btn-sm btn-primary btn-dragsort"><i class="fa fa-arrows"></i></span>
+                </dd>
+                {/foreach}
+                <dd><a href="javascript:;" class="append btn btn-sm btn-success"><i class="fa fa-plus"></i> {:__('Append')}</a></dd>
+            </div>
+        </dl>
+    </div>
     <div class="form-group hidden layer-footer">
         <label class="control-label col-xs-12 col-sm-2 col-xs-2"></label>
         <div class="col-xs-12 col-sm-8">

@@ -60,6 +60,7 @@ class Admin extends Backend
     public function index()
     {
         if ($this->request->isAjax())
+        // if (true)
         {
 
             $childrenGroupIds = $this->auth->getChildrenAdminIds(true);
@@ -75,7 +76,6 @@ class Admin extends Backend
                 if (isset($groupName[$v['group_id']]))
                     $adminGroupName[$v['uid']][$v['group_id']] = $groupName[$v['group_id']];
             }
-
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $total = $this->model
                     ->where($where)

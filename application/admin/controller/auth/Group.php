@@ -92,7 +92,7 @@ class Group extends Backend
      * 添加
      */
     public function add()
-    {
+    {   
         if ($this->request->isPost())
         {
             $params = $this->request->post("row/a", [], 'strip_tags');
@@ -116,6 +116,19 @@ class Group extends Backend
             // 如果当前组别不是超级管理员则需要过滤规则节点,不能超当前组别的权限
             $rules = in_array('*', $currentrules) ? $rules : array_intersect($currentrules, $rules);
             $params['rules'] = implode(',', $rules);
+
+            // 处理condition数据
+            $condition_arr = [];
+            if(!empty($params['groupcondition']['field'])){
+                foreach ($params['groupcondition']['field'] as $key => $value) {
+                    if (!empty($value) && !empty($params['groupcondition']['value'][$key])) {
+                        $condition_arr[$value] = $params['groupcondition']['value'][$key];
+                    }
+                }
+            }
+            unset($params['groupcondition']);
+            $params['condition'] = json_encode($condition_arr);
+            
             if ($params)
             {
                 $this->model->create($params);
@@ -159,6 +172,18 @@ class Group extends Backend
             // 如果当前组别不是超级管理员则需要过滤规则节点,不能超当前组别的权限
             $rules = in_array('*', $currentrules) ? $rules : array_intersect($currentrules, $rules);
             $params['rules'] = implode(',', $rules);
+            
+             // 处理condition数据
+            $condition_arr = [];
+            if(!empty($params['groupcondition']['field'])){
+                foreach ($params['groupcondition']['field'] as $key => $value) {
+                    if (!empty($value) && !empty($params['groupcondition']['value'][$key])) {
+                        $condition_arr[$value] = $params['groupcondition']['value'][$key];
+                    }
+                }
+            }
+            unset($params['groupcondition']);
+            $params['condition'] = json_encode($condition_arr);
             if ($params)
             {
                 $row->save($params);
@@ -167,6 +192,8 @@ class Group extends Backend
             $this->error();
             return;
         }
+        $row['condition'] = json_decode($row['condition']);
+        // var_dump($row);die();
         $this->view->assign("row", $row);
         return $this->view->fetch();
     }

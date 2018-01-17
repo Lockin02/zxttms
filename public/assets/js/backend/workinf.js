@@ -5,12 +5,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 初始化表格参数配置
             Table.api.init({
                 extend: {
-                    index_url: 'workseq/index',
-                    add_url: 'workseq/add',
-                    edit_url: 'workseq/edit',
-                    del_url: 'workseq/del',
-                    multi_url: 'workseq/multi',
-                    table: 'work_seq',
+                    index_url: 'workinf/index',
+                    add_url: 'workinf/add',
+                    edit_url: 'workinf/edit',
+                    del_url: 'workinf/del',
+                    multi_url: 'workinf/multi',
+                    table: 'work_inf',
                 }
             });
 
@@ -46,7 +46,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'eTV_license_count', title: __('Etv_license_count')},
                         {field: 'iTV_count', title: __('Itv_count')},
                         {field: 'reply_status', title: __('Reply_status'), formatter: Table.api.formatter.replystatus, searchList: {'0': __('Noreceipt'), '1':__('Hadreceipt'), '2':__('Receipterror')}},
-                        {field: 'complete_time', title: __('Complete_time'), operate: 'RANGE', addclass: 'datetimerange', operate: false}
+                        {field: 'complete_time', title: __('Complete_time'), operate: 'RANGE', addclass: 'datetimerange', operate: false},
+                        
+                        {field: 'hashcode', title: __('Hashcode')},
+                        {field: 'query_status', title: __('Query_status'), formatter: Table.api.formatter.status},
+                        {field: 'setup_person_name', title: __('Setup_person_name')},
+                        {field: 'setup_person_phone', title: __('Setup_person_phone')},
+                        {field: 'callback_time', title: __('Callback_time')},
+                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]
             });

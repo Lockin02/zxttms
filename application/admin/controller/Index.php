@@ -99,5 +99,4 @@ class Index extends Backend
         $this->auth->logout();
         $this->success(__('Logout successful'), 'index/login');
     }
-
-}
+}   
