@@ -346,44 +346,71 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     return html;
                 },
                 opertype: function(value, row, index){
-                    value = value.toString();
-                    value = value.charAt(0).toUpperCase() + value.slice(1);
-                    //渲染状态
-                    var html = '<span>' + __(value) + '</span>';
-                    return html;
+                    if ($.trim(value)) {
+                        value = value.toString();
+                        value = value.charAt(0).toUpperCase() + value.slice(1);
+                        //渲染状态
+                        var html = '<span>' + __(value) + '</span>';
+                        return html;
+                    }
                 },
                 productmix: function(value, row, index){
                     var valuetext = '';
+                    value = parseInt(value);
                     switch(value)
                     {
                         case 1:
                         valuetext = 'OneProduct';
+                        break;
                         default:
                         valuetext = 'OneProduct';
+                        break;
                     }
-                    //渲染状态
                     var html = '<span>' + __(valuetext) + '</span>';
                     return html;
                 },
                 paygrade: function(value, row, index){
-                    var valuetext = '';
+                    value = parseInt(value);
                     switch(value)
                     {
                         case 1:
                         valuetext = '50元/月';
+                        break;
                         case 2:
                         valuetext = '100元/月';
+                        break;
                         case 3:
                         valuetext = '15元/月';
+                        break;
                         case 4:
                         valuetext = '30元/月';
+                        break;
                         case 5:
                         valuetext = '40元/月';
+                        break;
                         default:
                         valuetext = '15元/月';
+                        break;
                     }
                     //渲染状态
                     var html = '<span>' + valuetext + '</span>';
+                    return html;
+                },
+                itvoption: function(value, row, index){
+                    value = parseInt(value);
+                    switch(value)
+                    {
+                        case 1:
+                        valuetext = 'Standard Definition';
+                        break;
+                        case 2:
+                        valuetext = 'High Definition';
+                        break;
+                        default:
+                        valuetext = '';
+                        break;
+                    }
+                    var html = '<span>' + __(valuetext) + '</span>';
                     return html;
                 },
                 replystatus: function(value, row, index){
@@ -392,12 +419,16 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     {
                         case 0:
                         valuetext = 'Noreceipt';
-                        case 0:
+                        break;
+                        case 1:
                         valuetext = 'Hadreceipt';
-                        case 0:
+                        break;
+                        case 2:
                         valuetext = 'Receipterror';
+                        break;
                         default:
                         valuetext = 'Noreceipt';
+                        break;
                     }
                     //渲染状态
                     var html = '<span>' + __(valuetext) + '</span>';
@@ -446,6 +477,9 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 },
                 datetime: function (value, row, index) {
                     return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD HH:mm:ss") : __('None');
+                },
+                date: function (value, row, index) {
+                    return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD") : __('None');
                 },
                 operate: function (value, row, index) {
                     var table = this.table;

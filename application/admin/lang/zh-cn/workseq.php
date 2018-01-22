@@ -32,5 +32,10 @@ return [
     'Noreceipt'         =>  '未回单',
     'Hadreceipt'        =>  '已回单',
     'Receipterror'      =>  '回单失败',
+    'Setup_person_name' =>  '安装人姓名',
+    'Setup_person_phone'=>  '安装人手机',
+    'Complete_time'     =>  '竣工时间',
+    'Standard Definition'   =>  '标清',
+    'High Definition'       =>  '高清',
 
 ];

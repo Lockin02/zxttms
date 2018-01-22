@@ -42,20 +42,46 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'installer_phone', title: __('Installer_phone'), operate: false},
                         {field: 'product_mix', title: __('Product_mix'), formatter: Table.api.formatter.productmix},
                         {field: 'pay_grade', title: __('Pay_grade'), formatter: Table.api.formatter.paygrade},
-                        {field: 'iTV_option', title: __('Itv_option')},
+                        {field: 'iTV_option', title: __('Itv_option'), formatter: Table.api.formatter.itvoption, searchList: {1:__('Standard Definition'), 2:__('High Definition')}},
                         {field: 'eTV_license_count', title: __('Etv_license_count')},
                         {field: 'iTV_count', title: __('Itv_count')},
                         {field: 'reply_status', title: __('Reply_status'), formatter: Table.api.formatter.replystatus, searchList: {'0': __('Noreceipt'), '1':__('Hadreceipt'), '2':__('Receipterror')}},
-                        {field: 'complete_time', title: __('Complete_time'), operate: 'RANGE', addclass: 'datetimerange', operate: false},
-                        
-                        {field: 'hashcode', title: __('Hashcode')},
-                        {field: 'query_status', title: __('Query_status'), formatter: Table.api.formatter.status},
-                        {field: 'setup_person_name', title: __('Setup_person_name')},
-                        {field: 'setup_person_phone', title: __('Setup_person_phone')},
-                        {field: 'callback_time', title: __('Callback_time')},
-                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
+                        {field: 'complete_time', title: __('Complete_time'), formatter: Table.api.formatter.date, cellStyle: function () {return {css: {"min-width": "150px"}}}, operate: 'RANGE', addclass: 'datetimerange'},
+                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate, cellStyle: function () {return {css: {"min-width": "150px"}}},
+                            buttons: [
+                                {name: 'detail', text: __('Detail'), classname: 'btn btn-xs btn-warning btn-detail btn-dialog', icon: 'fa fa-list', url: 'workinf/detail'}
+                            ],
+                        },
+                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
+                            formatter: function (value, row, index) {
+                                if (row.reply_status != "1") {
+                                    return '<a val="/zxttms/public/api/Gdbnet/replyoper/operId/'+row.oper_id+' " class="btn btn-xs btn-success confirm_oper_button" title="回单">回单</a>';
+                                }
+                            }
+                        }
                     ]
                 ]
+            });
+
+            // 回单
+            $(document).on('click', '.confirm_oper_button', function(event) {
+                var $url = $(this).attr("val");
+                $.ajax({
+                    url: $url,
+                    type: 'GET',
+                    dataType: 'json',
+                })
+                .done(function(data) {
+                    if (data['code'] == 200) {
+                        alert(__('Operation completed'));
+                    }else if(data['code'] == 0){
+                        alert(__('Operation failed'));
+                    }
+                    $("#orderlistTab").find(".btn-refresh").trigger("click");//点击tab刷新
+                })
+                .fail(function(data) {
+                    alert(__('Operation failed'));
+                });
             });
 
             // 为表格绑定事件

@@ -42,11 +42,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'installer_phone', title: __('Installer_phone'), operate: false},
                         {field: 'product_mix', title: __('Product_mix'), formatter: Table.api.formatter.productmix},
                         {field: 'pay_grade', title: __('Pay_grade'), formatter: Table.api.formatter.paygrade},
-                        {field: 'iTV_option', title: __('Itv_option')},
+                        {field: 'iTV_option', title: __('Itv_option'), formatter: Table.api.formatter.itvoption, searchList: {1:__('Standard Definition'), 2:__('High Definition')}},
                         {field: 'eTV_license_count', title: __('Etv_license_count')},
                         {field: 'iTV_count', title: __('Itv_count')},
                         {field: 'reply_status', title: __('Reply_status'), formatter: Table.api.formatter.replystatus, searchList: {'0': __('Noreceipt'), '1':__('Hadreceipt'), '2':__('Receipterror')}},
-                        {field: 'complete_time', title: __('Complete_time'), operate: 'RANGE', addclass: 'datetimerange', operate: false}
+                        {field: 'complete_time', title: __('Complete_time'), formatter: Table.api.formatter.date, cellStyle: function () {return {css: {"min-width": "150px"}}}, operate: 'RANGE', addclass: 'datetimerange'},
                     ]
                 ]
             });

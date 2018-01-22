@@ -57,6 +57,9 @@ if (!function_exists('datetime'))
      */
     function datetime($time, $format = 'Y-m-d H:i:s')
     {
+        if (empty($time)) {
+            return '';
+        }
         $time = is_numeric($time) ? $time : strtotime($time);
         return date($format, $time);
     }
@@ -298,5 +301,119 @@ if (!function_exists('addtion'))
         }
         return $items;
     }
-
 }
+
+
+if (!function_exists('common_convert_product_mix')) {
+
+    /**
+     * [工单列表和工单流水中的产品组合值转为名称]
+     * @param  $value    [值]
+     * @return $return   [描述名称]
+     */
+    function common_convert_product_mix($value)
+    {   
+        $value = trim($value);
+        if (empty($value)) {
+            return '';
+        }
+        switch ($value) {
+            case '1':
+                return __('OneProduct');
+                break;
+            default:
+                return __('OneProduct');
+                break;
+        }
+    }
+}
+
+if (!function_exists('common_convert_pay_grade')) {
+
+    /**
+     * [工单列表和工单流水中的产品组合值转为名称]
+     * @param  $value    [值]
+     * @return $return   [描述名称]
+     */
+    function common_convert_pay_grade($value)
+    {   
+        switch($value)
+        {
+            case 1:
+            $valuetext = '50元/月';
+            break;
+            case 2:
+            $valuetext = '100元/月';
+            break;
+            case 3:
+            $valuetext = '15元/月';
+            break;
+            case 4:
+            $valuetext = '30元/月';
+            break;
+            case 5:
+            $valuetext = '40元/月';
+            break;
+            default:
+            $valuetext = '15元/月';
+            break;
+        }
+        return $valuetext;
+    }
+}
+
+if (!function_exists('common_convert_itvoption')) {
+
+    /**
+     * [工单列表和工单流水中的产品组合值转为名称]
+     * @param  $value    [值]
+     * @return $return   [描述名称]
+     */
+    function common_convert_itvoption($value)
+    {   
+        $value = intval($value);
+        switch($value)
+        {
+            case 1:
+            $valuetext = __('Standard Definition');
+            break;
+            case 2:
+            $valuetext = __('High Definition');
+            break;
+            default:
+            $valuetext = '';
+            break;
+        }
+        return $valuetext;
+    }
+}
+
+if (!function_exists('common_convert_replystatusname')) {
+
+    /**
+     * [回单状态值转为名称]
+     * @param  $value    [值]
+     * @return $return   [描述名称]
+     */
+    function common_convert_replystatusname($value)
+    {   
+        $value = intval($value);
+        switch($value)
+        {
+            case 0:
+            $valuetext = __('Noreceipt');
+            break;
+            case 1:
+            $valuetext = __('Hadreceipt');
+            break;
+            case 2:
+            $valuetext = __('Receipterror');
+            break;
+            default:
+            $valuetext = '';
+            break;
+        }
+        return $valuetext;
+    }
+}
+
