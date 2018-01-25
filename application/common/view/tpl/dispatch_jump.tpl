@@ -40,9 +40,7 @@
                 <a href="<?php echo($url);?>" class="btn btn-primary">立即跳转</a>
             </p>
         </div>
-        <div class="copyright">
-            <p>Powered by <a href="http://www.fastadmin.net/?ref=jump">FastAdmin</a></p>
-        </div>
+
         <script type="text/javascript">
             (function () {
                 var wait = document.getElementById('wait'),
