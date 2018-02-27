@@ -5,6 +5,7 @@ namespace app\admin\library;
 use app\admin\model\Admin;
 use fast\Random;
 use fast\Tree;
+use think\Config;
 use think\Cookie;
 use think\Request;
 use think\Session;
@@ -14,6 +15,7 @@ class Auth extends \fast\Auth
 
     protected $requestUri = '';
     protected $breadcrumb = [];
+    protected $logined = false; //登录状态
 
     public function __construct()
     {
@@ -25,10 +27,22 @@ class Auth extends \fast\Auth
         return Session::get('admin.' . $name);
     }
 
+    /**
+     * 管理员登录
+     * 
+     * @param   string  $username   用户名
+     * @param   string  $password   密码
+     * @param   int     $keeptime   有效时长
+     * @return  boolean
+     */
     public function login($username, $password, $keeptime = 0)
     {
         $admin = Admin::get(['username' => $username]);
         if (!$admin)
+        {
+            return false;
+        }
+        if ($admin->loginfailure >= 3 && time() - $admin->updatetime < 86400)
         {
             return false;
         }
@@ -42,7 +56,7 @@ class Auth extends \fast\Auth
         $admin->logintime = time();
         $admin->token = Random::uuid();
         $admin->save();
-        Session::set("admin", $admin);
+        Session::set("admin", $admin->toArray());
         $this->keeplogin($keeptime);
         return true;
     }
@@ -88,7 +102,7 @@ class Auth extends \fast\Auth
             {
                 return false;
             }
-            Session::set("admin", $admin);
+            Session::set("admin", $admin->toArray());
             //刷新自动登录的时效
             $this->keeplogin($keeptime);
             return true;
@@ -101,8 +115,9 @@ class Auth extends \fast\Auth
 
     /**
      * 刷新保持登录的Cookie
-     * @param int $keeptime
-     * @return boolean
+     * 
+     * @param   int     $keeptime
+     * @return  boolean
      */
     protected function keeplogin($keeptime = 0)
     {
@@ -111,7 +126,7 @@ class Auth extends \fast\Auth
             $expiretime = time() + $keeptime;
             $key = md5(md5($this->id) . md5($keeptime) . md5($expiretime) . $this->token);
             $data = [$this->id, $keeptime, $expiretime, $key];
-            Cookie::set('keeplogin', implode('|', $data));
+            Cookie::set('keeplogin', implode('|', $data), 86400 * 30);
             return true;
         }
         return false;
@@ -153,7 +168,26 @@ class Auth extends \fast\Auth
      */
     public function isLogin()
     {
-        return Session::get('admin') ? true : false;
+        if ($this->logined)
+        {
+            return true;
+        }
+        $admin = Session::get('admin');
+        if (!$admin)
+        {
+            return false;
+        }
+        //判断是否同一时间同一账号只能在一个地方登录
+        if (Config::get('fastadmin.login_unique'))
+        {
+            $my = Admin::get($admin['id']);
+            if (!$my || $my['token'] != $admin['token'])
+            {
+                return false;
+            }
+        }
+        $this->logined = true;
+        return true;
     }
 
     /**
@@ -268,16 +302,24 @@ class Auth extends \fast\Auth
      */
     public function getChildrenAdminIds($withself = false)
     {
-        $groupIds = $this->getChildrenGroupIds(false);
         $childrenAdminIds = [];
-        $authGroupList = model('AuthGroupAccess')
-                ->field('uid,group_id')
-                ->where('group_id', 'in', $groupIds)
-                ->select();
-
-        foreach ($authGroupList as $k => $v)
+        if (!$this->isSuperAdmin())
         {
-            $childrenAdminIds[] = $v['uid'];
+            $groupIds = $this->getChildrenGroupIds(false);
+            $authGroupList = model('AuthGroupAccess')
+                    ->field('uid,group_id')
+                    ->where('group_id', 'in', $groupIds)
+                    ->select();
+
+            foreach ($authGroupList as $k => $v)
+            {
+                $childrenAdminIds[] = $v['uid'];
+            }
+        }
+        else
+        {
+            //超级管理员拥有所有人的权限
+            $childrenAdminIds = Admin::column('id');
         }
         if ($withself)
         {
@@ -361,7 +403,7 @@ class Auth extends \fast\Auth
         $select_id = 0;
         $pinyin = new \Overtrue\Pinyin\Pinyin('Overtrue\Pinyin\MemoryFileDictLoader');
         // 必须将结果集转换为数组
-        $ruleList = collection(model('AuthRule')->where('ismenu', 1)->order('weigh', 'desc')->cache("__menu__")->select())->toArray();
+        $ruleList = collection(model('AuthRule')->where('status', 'normal')->where('ismenu', 1)->order('weigh', 'desc')->cache("__menu__")->select())->toArray();
         foreach ($ruleList as $k => &$v)
         {
             if (!in_array($v['name'], $userRule))
@@ -378,7 +420,7 @@ class Auth extends \fast\Auth
         }
         // 构造菜单数据
         Tree::instance()->init($ruleList);
-        $menu = Tree::instance()->getTreeMenu(0, '<li class="@class"><a href="@url" addtabs="@id" url="@url" py="@py" pinyin="@pinyin"><i class="@icon"></i> <span>@title</span> <span class="pull-right-container">@caret @badge</span></a> @childlist</li>', $select_id, '', 'ul', 'class="treeview-menu"');
+        $menu = Tree::instance()->getTreeMenu(0, '<li class="@class"><a href="@url@addtabs" addtabs="@id" url="@url" py="@py" pinyin="@pinyin"><i class="@icon"></i> <span>@title</span> <span class="pull-right-container">@caret @badge</span></a> @childlist</li>', $select_id, '', 'ul', 'class="treeview-menu"');
         return $menu;
     }
 

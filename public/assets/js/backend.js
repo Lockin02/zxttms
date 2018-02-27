@@ -111,23 +111,106 @@ define(['fast', 'moment'], function (Fast, Moment) {
             Toastr.options.positionClass = Config.controllername === 'index' ? "toast-top-right-index" : "toast-top-right";
             //点击包含.btn-dialog的元素时弹出dialog
             $(document).on('click', '.btn-dialog,.dialogit', function (e) {
-                var options = $(this).data() || {};
-                Backend.api.open(Backend.api.replaceids(this, $(this).attr('href')), $(this).attr('title'), options);
+                var that = this;
+                var options = $.extend({}, $(that).data() || {});
+                if (typeof options.tableId !== 'undefined' && typeof options.fieldIndex !== 'undefined' && typeof options.buttonIndex !== 'undefined') {
+                    var tableOptions = $("#" + options.tableId).bootstrapTable('getOptions');
+                    if (tableOptions) {
+                        var columnObj = null;
+                        $.each(tableOptions.columns, function (i, columns) {
+                            $.each(columns, function (j, column) {
+                                if (typeof column.fieldIndex !== 'undefined' && column.fieldIndex === options.fieldIndex) {
+                                    columnObj = column;
+                                    return false;
+                                }
+                            });
+                            if (columnObj) {
+                                return false;
+                            }
+                        });
+                        if (columnObj) {
+                            var button = columnObj['buttons'][options.buttonIndex];
+                            if (button && typeof button.callback === 'function') {
+                                options.callback = button.callback;
+                            }
+                        }
+                    }
+                }
+                if (typeof options.confirm !== 'undefined') {
+                    Layer.confirm(options.confirm, function (index) {
+                        Backend.api.open(Backend.api.replaceids(that, $(that).attr('href')), $(that).attr('title'), options);
+                        Layer.close(index);
+                    });
+                } else {
+                    Backend.api.open(Backend.api.replaceids(that, $(that).attr('href')), $(that).attr('title'), options);
+                }
                 return false;
             });
             //点击包含.btn-addtabs的元素时新增选项卡
             $(document).on('click', '.btn-addtabs,.addtabsit', function (e) {
-                Backend.api.addtabs(Backend.api.replaceids(this, $(this).attr('href')), $(this).attr("title"));
+                var that = this;
+                var options = $.extend({}, $(that).data() || {});
+                if (typeof options.confirm !== 'undefined') {
+                    Layer.confirm(options.confirm, function (index) {
+                        Backend.api.addtabs(Backend.api.replaceids(that, $(that).attr('href')), $(that).attr("title"));
+                        Layer.close(index);
+                    });
+                } else {
+                    Backend.api.addtabs(Backend.api.replaceids(that, $(that).attr('href')), $(that).attr("title"));
+                }
+
                 return false;
             });
             //点击包含.btn-ajax的元素时发送Ajax请求
             $(document).on('click', '.btn-ajax,.ajaxit', function (e) {
-                var options = $(this).data();
-                if (typeof options.url === 'undefined' && $(this).attr("href")) {
-                    options.url = $(this).attr("href");
+                var that = this;
+                var options = $.extend({}, $(that).data() || {});
+                if (typeof options.url === 'undefined' && $(that).attr("href")) {
+                    options.url = $(that).attr("href");
                 }
                 options.url = Backend.api.replaceids(this, options.url);
-                Backend.api.ajax(options);
+                var success = typeof options.success === 'function' ? options.success : null;
+                var error = typeof options.error === 'function' ? options.error : null;
+                delete options.success;
+                delete options.error;
+                if (typeof options.tableId !== 'undefined' && typeof options.fieldIndex !== 'undefined' && typeof options.buttonIndex !== 'undefined') {
+                    var tableOptions = $("#" + options.tableId).bootstrapTable('getOptions');
+                    if (tableOptions) {
+                        var columnObj = null;
+                        $.each(tableOptions.columns, function (i, columns) {
+                            $.each(columns, function (j, column) {
+                                if (typeof column.fieldIndex !== 'undefined' && column.fieldIndex === options.fieldIndex) {
+                                    columnObj = column;
+                                    return false;
+                                }
+                            });
+                            if (columnObj) {
+                                return false;
+                            }
+                        });
+                        if (columnObj) {
+                            var button = columnObj['buttons'][options.buttonIndex];
+                            if (button && typeof button.success === 'function') {
+                                success = button.success;
+                            }
+                            if (button && typeof button.error === 'function') {
+                                error = button.error;
+                            }
+                        }
+                    }
+                }
+                //如果未设备成功的回调,设定了自动刷新的情况下自动进行刷新
+                if (!success && typeof options.tableId !== 'undefined' && typeof options.refresh !== 'undefined' && options.refresh) {
+                    $("#" + options.tableId).bootstrapTable('refresh');
+                }
+                if (typeof options.confirm !== 'undefined') {
+                    Layer.confirm(options.confirm, function (index) {
+                        Backend.api.ajax(options, success, error);
+                        Layer.close(index);
+                    });
+                } else {
+                    Backend.api.ajax(options, success, error);
+                }
                 return false;
             });
             //修复含有fixed-footer类的body边距

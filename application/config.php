@@ -244,7 +244,16 @@ return [
     ],
     //FastAdmin配置
     'fastadmin'              => [
-        'version' => '1.0.0.20171026_beta',
-        'api_url' => 'http://api.fastadmin.net',
+        //登录验证码
+        'login_captcha'    => false,
+        //是否同一账号同一时间只能在一个地方登录
+        'login_unique'     => false,
+        //登录页默认背景图
+        'login_background' => "/assets/img/loginbg.jpg",
+        //自动检测更新
+        'checkupdate'      => false,
+        //版本号
+        'version'          => '1.0.0.20180222_beta',
+        'api_url'          => 'http://api.fastadmin.net',
     ],
 ];

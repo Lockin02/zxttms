@@ -17,6 +17,13 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                     display: function (elem) {
                         return $(elem).closest('.form-group').find(".control-label").text().replace(/\:/, '');
                     },
+                    dataFilter: function (data) {
+                        if (data.code === 1) {
+                            return "";
+                        } else {
+                            return data.msg;
+                        }
+                    },
                     target: function (input) {
                         var $formitem = $(input).closest('.form-group'),
                                 $msgbox = $formitem.find('span.msg-box');
@@ -216,7 +223,7 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                 url = url ? url : location.href;
                 //修复当存在多选项元素时提交的BUG
                 var params = {};
-                var multipleList = $("[name$='[]']");
+                var multipleList = $("[name$='[]']", form);
                 if (multipleList.size() > 0) {
                     var postFields = form.serializeArray().map(function (obj) {
                         return $(obj).prop("name");
@@ -231,7 +238,7 @@ define(['jquery', 'bootstrap', 'upload', 'validator'], function ($, undefined, U
                 Fast.api.ajax({
                     type: type,
                     url: url,
-                    data: form.serialize() + (params ? '&' + $.param(params) : ''),
+                    data: form.serialize() + (Object.keys(params).length > 0 ? '&' + $.param(params) : ''),
                     dataType: 'json',
                     complete: function (xhr) {
                         var token = xhr.getResponseHeader('__token__');

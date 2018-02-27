@@ -19,6 +19,7 @@ return [
     'Product_mix'  =>  '产品组合',
     'Pay_grade'  =>  '资费档次',
     'Itv_option'  =>  'itv选项',
+    'Custom_Fee'  =>  '定制费',
     'Etv_license_count'  =>  'eTV的license数量',
     'Itv_count'  =>  'iTV数量',
     'Reply_status'  =>  '回单状态',
@@ -37,4 +38,7 @@ return [
     'Complete_time'     =>  '竣工时间',
     'Standard Definition'   =>  '标清',
     'High Definition'       =>  '高清',
+    'Zero a Month'      => '0元/月',
+    'Five a Month'      => '5元/月',
+    'Ten a Month'       => '10元/月',
 ];

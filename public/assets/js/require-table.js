@@ -69,6 +69,10 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 defaults = defaults ? defaults : {};
                 columnDefaults = columnDefaults ? columnDefaults : {};
                 locales = locales ? locales : {};
+                // 如果是iOS设备则启用卡片视图
+                if (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) {
+                    Table.defaults.cardView = true;
+                }
                 // 写入bootstrap-table默认配置
                 $.extend(true, $.fn.bootstrapTable.defaults, Table.defaults, defaults);
                 // 写入bootstrap-table column配置
@@ -101,7 +105,10 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 //Bootstrap操作区
                 var toolbar = $(options.toolbar, parenttable);
                 //当刷新表格时
-                table.on('load-error.bs.table', function (status, res) {
+                table.on('load-error.bs.table', function (status, res, e) {
+                    if (e.status === 0) {
+                        return;
+                    }
                     Toastr.error(__('Unknown data format'));
                 });
                 //当刷新表格时
@@ -156,7 +163,11 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 // 添加按钮事件
                 $(toolbar).on('click', Table.config.addbtn, function () {
                     var ids = Table.api.selectedids(table);
-                    Fast.api.open(options.extend.add_url + (ids.length > 0 ? (options.extend.add_url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + ids.join(",") : ''), __('Add'), $(this).data() || {});
+                    var url = options.extend.add_url;
+                    if (url.indexOf("{ids}") !== -1) {
+                        url = Table.api.replaceurl(url, {ids: ids.length > 0 ? ids.join(",") : 0}, table);
+                    }
+                    Fast.api.open(url, __('Add'), $(this).data() || {});
                 });
                 // 导入按钮事件
                 if ($(Table.config.importbtn, toolbar).size() > 0) {
@@ -173,11 +184,13 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 }
                 // 批量编辑按钮事件
                 $(toolbar).on('click', Table.config.editbtn, function () {
-                    var ids = Table.api.selectedids(table);
                     var that = this;
                     //循环弹出多个编辑框
-                    $.each(ids, function (i, j) {
-                        Fast.api.open(options.extend.edit_url + (options.extend.edit_url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + j, __('Edit'), $(that).data() || {});
+                    $.each(table.bootstrapTable('getSelections'), function (index, row) {
+                        var url = options.extend.edit_url;
+                        row = $.extend({}, row ? row : {}, {ids: row[options.pk]});
+                        var url = Table.api.replaceurl(url, row, table);
+                        Fast.api.open(url, __('Edit'), $(that).data() || {});
                     });
                 });
                 // 批量操作按钮事件
@@ -189,10 +202,10 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 $(toolbar).on('click', Table.config.delbtn, function () {
                     var that = this;
                     var ids = Table.api.selectedids(table);
-                    var index = Layer.confirm(
+                    Layer.confirm(
                             __('Are you sure you want to delete the %s selected item?', ids.length),
                             {icon: 3, title: __('Warning'), offset: 0, shadeClose: true},
-                            function () {
+                            function (index) {
                                 Table.api.multi("del", ids, table, that);
                                 Layer.close(index);
                             }
@@ -202,7 +215,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 require(['dragsort'], function () {
                     //绑定拖动排序
                     $("tbody", table).dragsort({
-                        itemSelector: 'tr',
+                        itemSelector: 'tr:visible',
                         dragSelector: "a.btn-dragsort",
                         dragEnd: function () {
                             var data = table.bootstrapTable('getData');
@@ -241,16 +254,27 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 });
                 $(table).on("click", "[data-id].btn-edit", function (e) {
                     e.preventDefault();
-                    Fast.api.open(options.extend.edit_url + (options.extend.edit_url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + $(this).data("id"), __('Edit'), $(this).data() || {});
+                    var ids = $(this).data("id");
+                    var row = {};
+                    var options = table.bootstrapTable("getOptions");
+                    $.each(table.bootstrapTable('getData'), function (i, j) {
+                        if (j[options.pk] == ids) {
+                            row = j;
+                            return false;
+                        }
+                    });
+                    row.ids = ids;
+                    var url = Table.api.replaceurl(options.extend.edit_url, row, table);
+                    Fast.api.open(url, __('Edit'), $(this).data() || {});
                 });
                 $(table).on("click", "[data-id].btn-del", function (e) {
                     e.preventDefault();
                     var id = $(this).data("id");
                     var that = this;
-                    var index = Layer.confirm(
+                    Layer.confirm(
                             __('Are you sure you want to delete this item?'),
                             {icon: 3, title: __('Warning'), shadeClose: true},
-                            function () {
+                            function (index) {
                                 Table.api.multi("del", id, table, that);
                                 Layer.close(index);
                             }
@@ -264,8 +288,9 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
             multi: function (action, ids, table, element) {
                 var options = table.bootstrapTable('getOptions');
                 var data = element ? $(element).data() : {};
+                var ids = ($.isArray(ids) ? ids.join(",") : ids);
                 var url = typeof data.url !== "undefined" ? data.url : (action == "del" ? options.extend.del_url : options.extend.multi_url);
-                url = url + (url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + ($.isArray(ids) ? ids.join(",") : ids);
+                url = this.replaceurl(url, {ids: ids}, table);
                 var params = typeof data.params !== "undefined" ? (typeof data.params == 'object' ? $.param(data.params) : data.params) : '';
                 var options = {url: url, data: {action: action, ids: ids, params: params}};
                 Fast.api.ajax(options, function (data) {
@@ -278,8 +303,12 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     'click .btn-editone': function (e, value, row, index) {
                         e.stopPropagation();
                         e.preventDefault();
-                        var options = $(this).closest('table').bootstrapTable('getOptions');
-                        Fast.api.open(options.extend.edit_url + (options.extend.edit_url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + row[options.pk], __('Edit'), $(this).data() || {});
+                        var table = $(this).closest('table');
+                        var options = table.bootstrapTable('getOptions');
+                        var ids = row[options.pk];
+                        row = $.extend({}, row ? row : {}, {ids: ids});
+                        var url = options.extend.edit_url;
+                        Fast.api.open(Table.api.replaceurl(url, row, table), __('Edit'), $(this).data() || {});
                     },
                     'click .btn-delone': function (e, value, row, index) {
                         e.stopPropagation();
@@ -293,10 +322,10 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                         if ($(window).width() < 480) {
                             top = left = undefined;
                         }
-                        var index = Layer.confirm(
+                        Layer.confirm(
                                 __('Are you sure you want to delete this item?'),
                                 {icon: 3, title: __('Warning'), offset: [top, left], shadeClose: true},
-                                function () {
+                                function (index) {
                                     var table = $(that).closest('table');
                                     var options = table.bootstrapTable('getOptions');
                                     Table.api.multi("del", row[options.pk], table, that);
@@ -321,9 +350,9 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     return '<img class="' + classname + '" src="' + Fast.api.cdnurl(value) + '" />';
                 },
                 images: function (value, row, index) {
-                    value = value.toString();
+                    value = value === null ? '' : value.toString();
                     var classname = typeof this.classname !== 'undefined' ? this.classname : 'img-sm img-center';
-                    var arr = value.toString().split(',');
+                    var arr = value.split(',');
                     var html = [];
                     $.each(arr, function (i, value) {
                         value = value ? value : '/assets/img/blank.gif';
@@ -333,18 +362,87 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 },
                 status: function (value, row, index) {
                     //颜色状态数组,可使用red/yellow/aqua/blue/navy/teal/olive/lime/fuchsia/purple/maroon
-                    var colorArr = {newProd: 'success', modifyProdState: 'grey', cancelProd: 'danger', invalidProd: 'info', modifyProdAttribute: 'primary'};
+                    var colorArr = {normal: 'success', hidden: 'grey', deleted: 'danger', locked: 'info'};
                     //如果字段列有定义custom
                     if (typeof this.custom !== 'undefined') {
                         colorArr = $.extend(colorArr, this.custom);
                     }
-                    value = value.toString();
+                    value = value === null ? '' : value.toString();
                     var color = value && typeof colorArr[value] !== 'undefined' ? colorArr[value] : 'primary';
                     value = value.charAt(0).toUpperCase() + value.slice(1);
                     //渲染状态
                     var html = '<span class="text-' + color + '"><i class="fa fa-circle"></i> ' + __(value) + '</span>';
                     return html;
                 },
+                url: function (value, row, index) {
+                    return '<div class="input-group input-group-sm" style="width:250px;"><input type="text" class="form-control input-sm" value="' + value + '"><span class="input-group-btn input-group-sm"><a href="' + value + '" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-link"></i></a></span></div>';
+                },
+                search: function (value, row, index) {
+                    return '<a href="javascript:;" class="searchit" data-field="' + this.field + '" data-value="' + value + '">' + value + '</a>';
+                },
+                addtabs: function (value, row, index) {
+                    var url = Table.api.replaceurl(this.url, row, this.table);
+                    var title = this.atitle ? this.atitle : __("Search %s", value);
+                    return '<a href="' + Fast.api.fixurl(url) + '" class="addtabsit" data-value="' + value + '" title="' + title + '">' + value + '</a>';
+                },
+                dialog: function (value, row, index) {
+                    var url = Table.api.replaceurl(this.url, row, this.table);
+                    var title = this.atitle ? this.atitle : __("View %s", value);
+                    return '<a href="' + Fast.api.fixurl(url) + '" class="dialogit" data-value="' + value + '" title="' + title + '">' + value + '</a>';
+                },
+                flag: function (value, row, index) {
+                    value = value === null ? '' : value.toString();
+                    var colorArr = {index: 'success', hot: 'warning', recommend: 'danger', 'new': 'info'};
+                    //如果字段列有定义custom
+                    if (typeof this.custom !== 'undefined') {
+                        colorArr = $.extend(colorArr, this.custom);
+                    }
+                    if (typeof this.customField !== 'undefined' && typeof row[this.customField] !== 'undefined') {
+                        value = row[this.customField];
+                    }
+                    //渲染Flag
+                    var html = [];
+                    var arr = value.split(',');
+                    $.each(arr, function (i, value) {
+                        value = value === null ? '' : value.toString();
+                        if (value == '')
+                            return true;
+                        var color = value && typeof colorArr[value] !== 'undefined' ? colorArr[value] : 'primary';
+                        value = value.charAt(0).toUpperCase() + value.slice(1);
+                        html.push('<span class="label label-' + color + '">' + __(value) + '</span>');
+                    });
+                    return html.join(' ');
+                },
+                label: function (value, row, index) {
+                    return Table.api.formatter.flag.call(this, value, row, index);
+                },
+                datetime: function (value, row, index) {
+                    return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD HH:mm:ss") : __('None');
+                },
+                operate: function (value, row, index) {
+                    var table = this.table;
+                    // 操作配置
+                    var options = table ? table.bootstrapTable('getOptions') : {};
+                    // 默认按钮组
+                    var buttons = $.extend([], this.buttons || []);
+
+                    if (options.extend.dragsort_url !== '') {
+                        buttons.push({name: 'dragsort', icon: 'fa fa-arrows', title: __('Drag to sort'), classname: 'btn btn-xs btn-primary btn-dragsort'});
+                    }
+                    if (options.extend.edit_url !== '') {
+                        buttons.push({name: 'edit', icon: 'fa fa-pencil', title: __('Edit'), classname: 'btn btn-xs btn-success btn-editone', url: options.extend.edit_url});
+                    }
+                    if (options.extend.del_url !== '') {
+                        buttons.push({name: 'del', icon: 'fa fa-trash', title: __('Del'), classname: 'btn btn-xs btn-danger btn-delone'});
+                    }
+                    return Table.api.buttonlink(this, buttons, value, row, index, 'operate');
+                },
+                buttons: function (value, row, index) {
+                    // 默认按钮组
+                    var buttons = $.extend([], this.buttons || []);
+                    return Table.api.buttonlink(this, buttons, value, row, index, 'buttons');
+                },
+                // 项目需要自建function
                 opertype: function(value, row, index){
                     if ($.trim(value)) {
                         value = value.toString();
@@ -396,6 +494,29 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     var html = '<span>' + valuetext + '</span>';
                     return html;
                 },
+                itvcount: function(value, row, index){
+                    return value=='null'?'':value;
+                },
+                customfee: function(value, row, index){
+                    value = parseInt(value);
+                    switch(value)
+                    {
+                        case 0:
+                        valuetext = 'Zero a Month';
+                        break;
+                        case 5:
+                        valuetext = 'Five a Month';
+                        break;
+                        case 10:
+                        valuetext = 'Ten a Month';
+                        break;
+                        default:
+                        valuetext = '';
+                        break;
+                    }
+                    var html = '<span>' + __(valuetext) + '</span>';
+                    return html;
+                },
                 itvoption: function(value, row, index){
                     value = parseInt(value);
                     switch(value)
@@ -434,127 +555,61 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     var html = '<span>' + __(valuetext) + '</span>';
                     return html;
                 },
-                url: function (value, row, index) {
-                    return '<div class="input-group input-group-sm" style="width:250px;"><input type="text" class="form-control input-sm" value="' + value + '"><span class="input-group-btn input-group-sm"><a href="' + value + '" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-link"></i></a></span></div>';
-                },
-                search: function (value, row, index) {
-                    return '<a href="javascript:;" class="searchit" data-field="' + this.field + '" data-value="' + value + '">' + value + '</a>';
-                },
-                addtabs: function (value, row, index) {
-                    var url = Table.api.replaceurl(this.url, value, row, this.table);
-                    var title = this.atitle ? this.atitle : __("Search %s", value);
-                    return '<a href="' + Fast.api.fixurl(url) + '" class="addtabsit" data-value="' + value + '" title="' + title + '">' + value + '</a>';
-                },
-                dialog: function (value, row, index) {
-                    var url = Table.api.replaceurl(this.url, value, row, this.table);
-                    var title = this.atitle ? this.atitle : __("View %s", value);
-                    return '<a href="' + Fast.api.fixurl(url) + '" class="dialogit" data-value="' + value + '" title="' + title + '">' + value + '</a>';
-                },
-                flag: function (value, row, index) {
-                    var colorArr = {index: 'success', hot: 'warning', recommend: 'danger', 'new': 'info'};
-                    //如果字段列有定义custom
-                    if (typeof this.custom !== 'undefined') {
-                        colorArr = $.extend(colorArr, this.custom);
-                    }
-                    if (typeof this.customField !== 'undefined' && typeof row[this.customField] !== 'undefined') {
-                        value = row[this.customField];
-                    }
-                    //渲染Flag
-                    var html = [];
-                    var arr = value.toString().split(',');
-                    $.each(arr, function (i, value) {
-                        value = value.toString();
-                        if (value == '')
-                            return true;
-                        var color = value && typeof colorArr[value] !== 'undefined' ? colorArr[value] : 'primary';
-                        value = value.charAt(0).toUpperCase() + value.slice(1);
-                        html.push('<span class="label label-' + color + '">' + __(value) + '</span>');
-                    });
-                    return html.join(' ');
-                },
-                label: function (value, row, index) {
-                    return Table.api.formatter.flag.call(this, value, row, index);
-                },
-                datetime: function (value, row, index) {
-                    return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD HH:mm:ss") : __('None');
-                },
-                date: function (value, row, index) {
-                    return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD") : __('None');
-                },
-                operate: function (value, row, index) {
-                    var table = this.table;
-                    // 操作配置
-                    var options = table ? table.bootstrapTable('getOptions') : {};
-                    // 默认按钮组
-                    var buttons = $.extend([], this.buttons || []);
-                    buttons.push({name: 'dragsort', icon: 'fa fa-arrows', classname: 'btn btn-xs btn-primary btn-dragsort'});
-                    buttons.push({name: 'edit', icon: 'fa fa-pencil', classname: 'btn btn-xs btn-success btn-editone', url: options.extend.edit_url});
-                    buttons.push({name: 'del', icon: 'fa fa-trash', classname: 'btn btn-xs btn-danger btn-delone'});
-                    var html = [];
-                    var url, classname, icon, text, title, extend;
-                    $.each(buttons, function (i, j) {
+            },
+            buttonlink: function (column, buttons, value, row, index, type) {
+                var table = column.table;
+                type = typeof type === 'undefined' ? 'buttons' : type;
+                var options = table ? table.bootstrapTable('getOptions') : {};
+                var html = [];
+                var url, classname, icon, text, title, extend;
+                var fieldIndex = column.fieldIndex;
+
+                $.each(buttons, function (i, j) {
+                    if (type === 'operate') {
                         if (j.name === 'dragsort' && typeof row[Table.config.dragsortfield] === 'undefined') {
                             return true;
                         }
                         if (['add', 'edit', 'del', 'multi', 'dragsort'].indexOf(j.name) > -1 && !options.extend[j.name + "_url"]) {
                             return true;
                         }
-                        var attr = table.data("operate-" + j.name);
-                        if (typeof attr === 'undefined' || attr) {
-                            url = j.url ? j.url : '';
-                            if (url.indexOf("{ids}") === -1) {
-                                url = url ? url + (url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + row[options.pk] : '';
-                            }
-                            url = Table.api.replaceurl(url, value, row, table);
-                            url = url ? Fast.api.fixurl(url) : 'javascript:;';
-                            classname = j.classname ? j.classname : 'btn-primary btn-' + name + 'one';
-                            icon = j.icon ? j.icon : '';
-                            text = j.text ? j.text : '';
-                            title = j.title ? j.title : text;
-                            extend = j.extend ? j.extend : '';
-                            html.push('<a href="' + url + '" class="' + classname + '" ' + extend + ' title="' + title + '"><i class="' + icon + '"></i>' + (text ? ' ' + text : '') + '</a>');
-                        }
-                    });
-                    return html.join(' ');
-                },
-                buttons: function (value, row, index) {
-                    var table = this.table;
-                    // 操作配置
-                    var options = table ? table.bootstrapTable('getOptions') : {};
-                    // 默认按钮组
-                    var buttons = $.extend([], this.buttons || []);
-                    var html = [];
-                    var url, classname, icon, text, title, extend;
-                    $.each(buttons, function (i, j) {
-                        var attr = table.data("buttons-" + j.name);
-                        if (typeof attr === 'undefined' || attr) {
-                            url = j.url ? j.url : '';
-                            if (url.indexOf("{ids}") === -1) {
-                                url = url ? url + (url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + row[options.pk] : '';
-                            }
-                            url = Table.api.replaceurl(url, value, row, table);
-                            url = url ? Fast.api.fixurl(url) : 'javascript:;';
-                            classname = j.classname ? j.classname : 'btn-primary btn-' + name + 'one';
-                            icon = j.icon ? j.icon : '';
-                            text = j.text ? j.text : '';
-                            title = j.title ? j.title : text;
-                            extend = j.extend ? j.extend : '';
-                            html.push('<a href="' + url + '" class="' + classname + '" ' + extend + ' title="' + title + '"><i class="' + icon + '"></i>' + (text ? ' ' + text : '') + '</a>');
-                        }
-                    });
-                    return html.join(' ');
-                }
+                    }
+                    var attr = table.data(type + "-" + j.name);
+                    if (typeof attr === 'undefined' || attr) {
+                        url = j.url ? j.url : '';
+                        url = url ? Fast.api.fixurl(Table.api.replaceurl(url, row, table)) : 'javascript:;';
+                        classname = j.classname ? j.classname : 'btn-primary btn-' + name + 'one';
+                        icon = j.icon ? j.icon : '';
+                        text = j.text ? j.text : '';
+                        title = j.title ? j.title : text;
+                        refresh = j.refresh ? 'data-refresh="' + j.refresh + '"' : '';
+                        confirm = j.confirm ? 'data-confirm="' + j.confirm + '"' : '';
+                        extend = j.extend ? j.extend : '';
+                        html.push('<a href="' + url + '" class="' + classname + '" ' + (confirm ? confirm + ' ' : '') + (refresh ? refresh + ' ' : '') + extend + ' title="' + title + '" data-table-id="' + (table ? table.attr("id") : '') + '" data-field-index="' + fieldIndex + '" data-row-index="' + index + '" data-button-index="' + i + '"><i class="' + icon + '"></i>' + (text ? ' ' + text : '') + '</a>');
+                    }
+                });
+                return html.join(' ');
             },
-            //替换URL中的{ids}和{value}
-            replaceurl: function (url, value, row, table) {
-                url = url ? url : '';
-                url = url.replace(/\{value\}/ig, value);
-                if (table) {
-                    var options = table.bootstrapTable('getOptions');
-                    url = url.replace(/\{ids\}/ig, row[options.pk]);
-                } else {
-                    url = url.replace(/\{ids\}/ig, 0);
-                }
+            //替换URL中的数据
+            replaceurl: function (url, row, table) {
+                var options = table ? table.bootstrapTable('getOptions') : null;
+                var ids = options ? row[options.pk] : 0;
+                row.ids = ids ? ids : (typeof row.ids !== 'undefined' ? row.ids : 0);
+                //自动添加ids参数
+                url = !url.match(/\{ids\}/i) ? url + (url.match(/(\?|&)+/) ? "&ids=" : "/ids/") + '{ids}' : url;
+                url = url.replace(/\{(.*?)\}/gi, function (matched) {
+                    matched = matched.substring(1, matched.length - 1);
+                    if (matched.indexOf(".") !== -1) {
+                        var temp = row;
+                        var arr = matched.split(/\./);
+                        for (var i = 0; i < arr.length; i++) {
+                            if (typeof temp[arr[i]] !== 'undefined') {
+                                temp = temp[arr[i]];
+                            }
+                        }
+                        return typeof temp === 'object' ? '' : temp;
+                    }
+                    return row[matched];
+                });
                 return url;
             },
             // 获取选中的条目ID集合
@@ -573,6 +628,12 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
             // 切换复选框状态
             toggleattr: function (table) {
                 $("input[type='checkbox']", table).trigger('click');
+            },
+            // 根据行索引获取行数据
+            getrowdata: function (table, index) {
+                index = parseInt(index);
+                var data = table.bootstrapTable('getData');
+                return typeof data[index] !== 'undefined' ? data[index] : null;
             }
         },
     };

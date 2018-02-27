@@ -63,6 +63,11 @@ class Backend extends Controller
     protected $dataLimitField = 'admin_id';
 
     /**
+     * 数据限制开启时自动填充限制字段值
+     */
+    protected $dataLimitFieldAutoFill = true;
+
+    /**
      * 是否开启Validate验证
      */
     protected $modelValidate = false;
@@ -76,6 +81,13 @@ class Backend extends Controller
      * Multi方法可批量修改的字段
      */
     protected $multiFields = 'status';
+
+    /**
+     * 导入文件首行类型
+     * 支持comment/name
+     * 表示注释或字段名
+     */
+    protected $importHeadType = 'comment';
 
     /**
      * 引入后台控制器的traits
@@ -159,7 +171,7 @@ class Backend extends Controller
 
         // 配置信息
         $config = [
-            'site'           => array_intersect_key($site, array_flip(['name', 'cdnurl', 'version', 'timezone', 'languages'])),
+            'site'           => array_intersect_key($site, array_flip(['name', 'indexurl', 'cdnurl', 'version', 'timezone', 'languages'])),
             'upload'         => $upload,
             'modulename'     => $modulename,
             'controllername' => $controllername,
@@ -170,9 +182,10 @@ class Backend extends Controller
             'fastadmin'      => Config::get('fastadmin'),
             'referer'        => Session::get("referer")
         ];
-            
+        $config = array_merge($config, Config::get("view_replace_str"));
+
         Config::set('upload', array_merge(Config::get('upload'), $upload));
-        
+
         // 配置信息后
         Hook::listen("config_init", $config);
         //加载当前控制器语言包
@@ -232,16 +245,14 @@ class Backend extends Controller
         {
             if (!empty($this->model))
             {
-                $class = get_class($this->model);
-                $name = basename(str_replace('\\', '/', $class));
-                $tableName = $this->model->getQuery()->getTable($name) . ".";
+                $tableName = $this->model->getQuery()->getTable() . ".";
             }
             $sort = stripos($sort, ".") === false ? $tableName . $sort : $sort;
         }
         $adminIds = $this->getDataLimitAdminIds();
         if (is_array($adminIds))
         {
-            $where[] = [$this->dataLimitField, 'in', $adminIds];
+            $where[] = [$tableName . $this->dataLimitField, 'in', $adminIds];
         }
         if ($search)
         {
@@ -360,6 +371,10 @@ class Backend extends Controller
     protected function getDataLimitAdminIds()
     {
         if (!$this->dataLimit)
+        {
+            return null;
+        }
+        if ($this->auth->isSuperAdmin())
         {
             return null;
         }

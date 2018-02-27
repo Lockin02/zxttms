@@ -87,8 +87,21 @@ class Gdbnet
             if ($addData['oper_type'] == 'modifyProdState') { //停复机状态 直接回单
             	$addData['reply_status'] = 1;
             }
-            Db::name('work_inf')->insert($addData);
+
+	        // 不同类型工单列表处理形式不一致
+	        switch ($returndata['operPublicInfo']['operType']) {
+		        // 产品订购 (新增)
+		        case 'newProd':
+			        Db::name('work_inf')->insert($addData);
+			        break;
+		        // 停复机 变更 拆机 (更新)
+		        default:
+			        Db::name('work_inf')->where('oper_id', $addData['oper_id'])->update($addData);
+			        break;
+	        }
+	        // 工单流水插入数据
             Db::name('work_seq')->insert($addData);
+
         	$success_outputdata = [
 				'operId'	=>	$addData['oper_id'],
 				'result'	=>	'20000',
@@ -206,6 +219,7 @@ class Gdbnet
 			$data['iTV_option'] = $returndata['productInfo']['productAttribute']['11']['attributeValue'];
 			$data['eTV_license_count'] = $returndata['productInfo']['productAttribute']['12']['attributeValue'];
 			$data['iTV_count'] = $returndata['productInfo']['productAttribute']['13']['attributeValue'];
+			$data['custom_fee'] = $returndata['productInfo']['productAttribute']['15']['attributeValue'];
 			$data['reply_status'] = 0; //回单状态
 			$data['hashcode'] = $returndata['operPublicInfo']['hashcode'];
 			$data['query_status'] = 1;
@@ -262,6 +276,9 @@ class Gdbnet
 			$data['iTV_option'] = $returndata['productInfo']['productAttribute']['11']['attributeValue'];
 			$data['eTV_license_count'] = $returndata['productInfo']['productAttribute']['12']['attributeValue'];
 			$data['iTV_count'] = $returndata['productInfo']['productAttribute']['13']['attributeValue'];
+			if (isset($returndata['productInfo']['productAttribute']['15']['attributeValue'])) {
+				$data['custom_fee'] = $returndata['productInfo']['productAttribute']['15']['attributeValue'];
+			}
 			$data['reply_status'] = 0; //回单状态
 			$data['hashcode'] = $returndata['operPublicInfo']['hashcode'];
 			$data['query_status'] = 1;

@@ -14,6 +14,26 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
 
             var table = $("#table");
 
+            table.on('post-body.bs.table', function (e, settings, json, xhr) {
+                var parenttable = table.closest('.bootstrap-table');
+                var d = $(".fixed-table-toolbar", parenttable).find(".search input");
+                d.off("keyup drop blur");
+                d.on("keyup", function (e) {
+                    if (e.keyCode == 13) {
+                        var that = this;
+                        var options = table.bootstrapTable('getOptions');
+                        var queryParams = options.queryParams;
+                        options.pageNumber = 1;
+                        options.queryParams = function (params) {
+                            var params = queryParams(params);
+                            params.search = $(that).val();
+                            return params;
+                        };
+                        table.bootstrapTable('refresh', {});
+                    }
+                });
+            });
+
             Template.helper("Moment", Moment);
             Template.helper("addons", Config['addons']);
 
@@ -22,24 +42,68 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                 url: location.protocol === "https:" ? "addon/downloaded" : $.fn.bootstrapTable.defaults.extend.index_url,
                 columns: [
                     [
-                        {field: 'id', title: 'ID'},
-                        {field: 'name', title: __('Name')},
-                        {field: 'title', title: __('Title')}
+                        {field: 'id', title: 'ID', operate: false},
+                        {field: 'name', title: __('Name'), operate: false},
+                        {field: 'title', title: __('Title'), operate: 'LIKE'}
                     ]
                 ],
                 dataType: 'jsonp',
                 templateView: true,
-                search: false,
+                search: true,
                 showColumns: false,
                 showToggle: false,
                 showExport: false,
-                commonSearch: true,
+                commonSearch: false,
                 searchFormVisible: false,
-                pageSize: 10
+                pageSize: 12,
+                queryParams: function (params) {
+                    var filter = params.filter ? JSON.parse(params.filter) : {};
+                    var op = params.op ? JSON.parse(params.op) : {};
+                    filter.faversion = Config.fastadmin.version;
+                    op.faversion = "=";
+                    params.filter = JSON.stringify(filter);
+                    params.op = JSON.stringify(op);
+                    return params;
+                }
             });
 
             // 为表格绑定事件
             Table.api.bindevent(table);
+
+            table.on('click', '.btn-addoninfo', function (event) {
+                var index = parseInt($(this).data("index"));
+                var data = table.bootstrapTable("getData");
+                var item = data[index];
+                var addon = typeof Config.addons[item.name] != 'undefined' ? Config.addons[item.name] : null;
+                Layer.alert(Template("addoninfotpl", {item: item, addon: addon}), {
+                    btn: [__('OK'), __('Donate'), __('Feedback'), __('Document')],
+                    title: __('Detail'),
+                    area: ['450px', '490px'],
+                    btn2: function () {
+                        //打赏
+                        Layer.open({
+                            content: Template("paytpl", {payimg: item.donateimage}),
+                            shade: 0.8,
+                            area: ['800px', '600px'],
+                            skin: 'layui-layer-msg layui-layer-pay',
+                            title: false,
+                            closeBtn: true,
+                            btn: false,
+                            resize: false,
+                        });
+                    },
+                    btn3: function () {
+                        return false;
+                    },
+                    btn4: function () {
+                        return false;
+                    },
+                    success: function (layero, index) {
+                        $(".layui-layer-btn2", layero).attr("href", "http://forum.fastadmin.net/t/bug?ref=addon&name=" + item.name).attr("target", "_blank");
+                        $(".layui-layer-btn3", layero).attr("href", "http://www.fastadmin.net/store/" + item.name + ".html?ref=addon").attr("target", "_blank");
+                    }
+                });
+            });
 
             // 如果是https则启用提示
             if (location.protocol === "https:") {
@@ -55,8 +119,19 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                 });
             });
 
+            //查看插件首页
+            $(document).on("click", ".btn-addonindex", function () {
+                if ($(this).attr("href") == 'javascript:;') {
+                    Layer.msg(__('Not installed tips'), {icon: 7});
+                } else if ($(this).closest(".operate").find("a.btn-enable").size() > 0) {
+                    Layer.msg(__('Not enabled tips'), {icon: 7});
+                    return false;
+                }
+            });
             //切换URL
             $(document).on("click", ".btn-switch", function () {
+                $(".btn-switch").removeClass("active");
+                $(this).addClass("active");
                 table.bootstrapTable('refresh', {url: $(this).data("url"), pageNumber: 1});
             });
             // 会员信息
@@ -111,6 +186,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                                 Layer.closeAll();
                                 Layer.alert(ret.msg);
                             }, function (data, ret) {
+                                Controller.api.userinfo.set(null);
+                                Layer.closeAll();
                                 Layer.alert(ret.msg);
                             });
                         }
@@ -122,13 +199,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
             $(document).on("click", ".btn-install", function () {
                 var that = this;
                 var name = $(this).closest(".operate").data("name");
+                var version = $(this).data("version");
                 var userinfo = Controller.api.userinfo.get();
                 var uid = userinfo ? userinfo.id : 0;
                 var token = userinfo ? userinfo.token : '';
                 var install = function (name, force) {
                     Fast.api.ajax({
                         url: 'addon/install',
-                        data: {name: name, force: force ? 1 : 0, uid: uid, token: token}
+                        data: {name: name, force: force ? 1 : 0, uid: uid, token: token, version: version, faversion: Config.fastadmin.version}
                     }, function (data, ret) {
                         Layer.closeAll();
                         Config['addons'][data.addon.name] = ret.data.addon;
@@ -301,6 +379,39 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                     });
                 };
                 operate(name, action, false);
+            });
+
+            //点击升级
+            $(document).on("click", ".btn-upgrade", function () {
+                if ($(this).closest(".operate").find("a.btn-disable").size() > 0) {
+                    Layer.alert(__('Please disable addon first'), {icon: 7});
+                    return false;
+                }
+                var name = $(this).closest(".operate").data("name");
+                var version = $(this).data("version");
+                var userinfo = Controller.api.userinfo.get();
+                var uid = userinfo ? userinfo.id : 0;
+                var token = userinfo ? userinfo.token : '';
+                var upgrade = function (name) {
+                    Fast.api.ajax({
+                        url: 'addon/upgrade',
+                        data: {name: name, uid: uid, token: token, version: version, faversion: Config.fastadmin.version}
+                    }, function (data, ret) {
+                        Config['addons'][name].version = version;
+                        Layer.closeAll();
+                        $('.btn-refresh').trigger('click');
+                    }, function (data, ret) {
+                        Layer.alert(ret.msg);
+                        return false;
+                    });
+                };
+                Layer.confirm(__('Upgrade tips'), function () {
+                    upgrade(name);
+                });
+            });
+
+            $(document).on("click", ".operate .btn-group .dropdown-toggle", function () {
+                $(this).closest(".btn-group").toggleClass("dropup", $(document).height() - $(this).offset().top <= 200);
             });
         },
         add: function () {

@@ -55,7 +55,7 @@ require.config({
     },
     // shim依赖配置
     shim: {
-        'addons': ['backend'],
+        'addons': ['frontend'],
         'bootstrap': ['jquery'],
         'bootstrap-table': {
             deps: [
@@ -113,7 +113,7 @@ require.config({
             deps: ['../libs/plupload/js/moxie.min'],
             exports: "plupload"
         },
-//        'layer': ['css!../libs/layer/build/skin/default/layer.css'],
+//        'layer': ['css!../libs/layer/dist/theme/default/layer.css'],
 //        'validator-core': ['css!../libs/nice-validator/dist/jquery.validator.css'],
         'validator-lang': ['validator-core'],
 //        'selectpage': ['css!../libs/selectpage/selectpage.css'],
@@ -138,7 +138,7 @@ require(['jquery', 'bootstrap'], function ($, undefined) {
     var paths = {};
     paths['lang'] = Config.moduleurl + '/ajax/lang?callback=define&controllername=' + Config.controllername;
     // 避免目录冲突
-    paths['backend/'] = 'backend/';
+    paths['frontend/'] = 'frontend/';
     require.config({paths: paths});
 
     // 初始化

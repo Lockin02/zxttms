@@ -6,6 +6,8 @@
  * @author Karson
  * @website http://www.fastadmin.net
  */
+// error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+// ini_set('display_errors', '1');
 // 定义目录分隔符
 define('DS', DIRECTORY_SEPARATOR);
 
@@ -75,7 +77,7 @@ else if (!extension_loaded("PDO"))
 }
 else if (!is_really_writable($dbConfigFile))
 {
-    $errInfo = "当前权限不足，无法写入配置文件application/database.php";
+    $errInfo = '当前权限不足，无法写入配置文件application/database.php<br><a href="http://forum.fastadmin.net/?q=%E6%9D%83%E9%99%90%E4%B8%8D%E8%B6%B3" target="_blank">点击查看解决办法</a>';
 }
 else
 {
@@ -84,7 +86,7 @@ else
     {
         if (!is_dir(ROOT_PATH . $v))
         {
-            $errInfo = '请先下载完整包覆盖后再安装，<a href="' . $link['qqun'] . '" target="_blank">群共享下载</a> <a href="' . $link['gitee'] . '" target="_blank">码云下载</a>';
+            $errInfo = '当前代码仅包含核心代码，请前往官网下载完整包或资源包覆盖后再尝试安装，<a href="http://www.fastadmin.net/download.html?ref=install" target="_blank">立即前往下载</a>';
             break;
         }
     }
@@ -93,7 +95,7 @@ else
 if (!$errInfo && isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST')
 {
     $err = '';
-    $mysqlHostname = isset($_POST['mysqlHost']) ? $_POST['mysqlHost'] : 'localhost';
+    $mysqlHostname = isset($_POST['mysqlHost']) ? $_POST['mysqlHost'] : '127.0.0.1';
     $mysqlHostport = 3306;
     $hostArr = explode(':', $mysqlHostname);
     if (count($hostArr) > 1)
@@ -328,22 +330,22 @@ if (!$errInfo && isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD']
             <h2>安装 <?php echo $sitename; ?></h2>
             <div>
 
-                <p>若你在安装中遇到麻烦可点击  <a href="<?php echo $link['doc']; ?>" target="_blank">安装文档</a> <a href="<?php echo $link['forum']; ?>" target="_blank">交流论坛</a> <a href="<?php echo $link['qqun']; ?>">QQ交流群</a></p>
+                <p>若你在安装中遇到麻烦可点击  <a href="<?php echo $link['doc']; ?>" target="_blank">安装文档</a> <a href="<?php echo $link['forum']; ?>" target="_blank">交流社区</a> <a href="<?php echo $link['qqun']; ?>">QQ交流群</a></p>
                 <!--<p><?php echo $sitename; ?>还支持在命令行php think install一键安装</p>-->
 
                 <form method="post">
-                    <?php if ($errInfo): ?>
+                        <?php if ($errInfo): ?>
                         <div class="error">
-                            <?php echo $errInfo; ?>
+                        <?php echo $errInfo; ?>
                         </div>
-                    <?php endif; ?>
+                        <?php endif; ?>
                     <div id="error" style="display:none"></div>
                     <div id="success" style="display:none"></div>
 
                     <div class="form-group">
                         <div class="form-field">
                             <label>MySQL 数据库地址</label>
-                            <input type="text" name="mysqlHost" value="localhost" required="">
+                            <input type="text" name="mysqlHost" value="127.0.0.1" required="">
                         </div>
 
                         <div class="form-field">

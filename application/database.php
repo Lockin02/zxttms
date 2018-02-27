@@ -16,13 +16,15 @@ return [
     // 数据库类型
     'type'            => Env::get('database.type', 'mysql'),
     // 服务器地址
-    'hostname'        => Env::get('database.hostname', 'localhost'),
+    // 'hostname'        => Env::get('database.hostname', 'localhost'),
+    'hostname'        => Env::get('database.hostname', '192.168.0.250'),
     // 数据库名
     'database'        => Env::get('database.database', 'zxttms'),
     // 用户名
     'username'        => Env::get('database.username', 'root'),
     // 密码
-    'password'        => Env::get('database.password', ''),
+    // 'password'        => Env::get('database.password', ''),
+    'password'        => Env::get('database.password', 'dev@2017'),
     // 端口
     'hostport'        => Env::get('database.hostport', ''),
     // 连接dsn

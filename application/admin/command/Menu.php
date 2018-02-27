@@ -86,7 +86,7 @@ class Menu extends Command
         }
         else
         {
-            $this->model->destroy([]);
+            $this->model->where('id', '>', 0)->delete();
             $controllerDir = $adminPath . 'controller' . DS;
             // 扫描新的节点信息并导入
             $treelist = $this->import($this->scandir($controllerDir));
@@ -187,6 +187,19 @@ class Menu extends Command
         //只匹配公共的方法
         $methods = $reflector->getMethods(ReflectionMethod::IS_PUBLIC);
         $classComment = $reflector->getDocComment();
+        //判断是否有启用软删除
+        $softDeleteMethods = ['destroy', 'restore', 'recyclebin'];
+        $withSofeDelete = false;
+        preg_match_all("/\\\$this\->model\s*=\s*model\('(\w+)'\);/", $classContent, $matches);
+        if (isset($matches[1]) && isset($matches[1][0]) && $matches[1][0])
+        {
+            \think\Request::instance()->module('admin');
+            $model = model($matches[1][0]);
+            if (in_array('trashed', get_class_methods($model)))
+            {
+                $withSofeDelete = true;
+            }
+        }
         //忽略的类
         if (stripos($classComment, "@internal") !== FALSE)
         {
@@ -215,8 +228,8 @@ class Menu extends Command
 
         //导入中文语言包
         \think\Lang::load(dirname(__DIR__) . DS . 'lang/zh-cn.php');
-        
-        //先定入菜单的数据
+
+        //先导入菜单的数据
         $pid = 0;
         foreach ($controllerArr as $k => $v)
         {
@@ -248,6 +261,11 @@ class Menu extends Command
             {
                 continue;
             }
+            //未启用软删除时过滤相关方法
+            if (!$withSofeDelete && in_array($n->name, $softDeleteMethods))
+            {
+                continue;
+            }
             //只匹配符合的方法
             if (!preg_match('/^(\w+)' . Config::get('action_suffix') . '/', $n->name, $matchtwo))
             {
@@ -262,12 +280,27 @@ class Menu extends Command
             }
             //过滤掉其它字符
             $comment = preg_replace(array('/^\/\*\*(.*)[\n\r\t]/u', '/[\s]+\*\//u', '/\*\s@(.*)/u', '/[\s|\*]+/u'), '', $comment);
-            
+
             $title = $comment ? $comment : ucfirst($n->name);
-            
-            $ruleArr[] = array('pid' => $pid, 'name' => $name . "/" . strtolower($n->name), 'icon' => 'fa fa-circle-o', 'title' => $title, 'ismenu' => 0, 'status' => 'normal');
+
+            //获取主键，作为AuthRule更新依据
+            $id = $this->getAuthRulePK($name . "/" . strtolower($n->name));
+
+            $ruleArr[] = array('id' => $id, 'pid' => $pid, 'name' => $name . "/" . strtolower($n->name), 'icon' => 'fa fa-circle-o', 'title' => $title, 'ismenu' => 0, 'status' => 'normal');
         }
-        $this->model->saveAll($ruleArr);
+        $this->model->isUpdate(false)->saveAll($ruleArr);
+    }
+
+    //获取主键
+    protected function getAuthRulePK($name)
+    {
+        if (!empty($name))
+        {
+            $id = $this->model
+                    ->where('name', $name)
+                    ->value('id');
+            return $id ? $id : null;
+        }
     }
 
 }

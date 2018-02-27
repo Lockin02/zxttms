@@ -118,7 +118,7 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
 
             //读取版本检测信息
             var ignoreversion = localStorage.getItem("ignoreversion");
-            if (ignoreversion !== "*") {
+            if (Config.fastadmin.checkupdate && ignoreversion !== "*") {
                 checkupdate(ignoreversion, false);
             }
             //手动检测版本信息
@@ -178,17 +178,29 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                 }
             });
 
-            //绑定tabs事件
-            $('#nav').addtabs({iframeHeight: "100%"});
+            //这一行需要放在点击左侧链接事件之前
+            var addtabs = Config.referer ? localStorage.getItem("addtabs") : null;
 
+            //绑定tabs事件,如果需要点击强制刷新iframe,则请将iframeForceRefresh置为true
+            $('#nav').addtabs({iframeHeight: "100%", iframeForceRefresh: false});
             if ($("ul.sidebar-menu li.active a").size() > 0) {
                 $("ul.sidebar-menu li.active a").trigger("click");
             } else {
                 $("ul.sidebar-menu li a[url!='javascript:;']:first").trigger("click");
             }
+            //如果是刷新操作则直接返回刷新前的页面
             if (Config.referer) {
-                //刷新页面后跳到到刷新前的页面
-                Backend.api.addtabs(Config.referer);
+                if (Config.referer === $(addtabs).attr("url")) {
+                    var active = $("ul.sidebar-menu li a[addtabs=" + $(addtabs).attr("addtabs") + "]");
+                    if (active.size() > 0) {
+                        active.trigger("click");
+                    } else {
+                        $(addtabs).appendTo(document.body).addClass("hide").trigger("click");
+                    }
+                } else {
+                    //刷新页面后跳到到刷新前的页面
+                    Backend.api.addtabs(Config.referer);
+                }
             }
 
             /**
@@ -198,13 +210,13 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
              */
             var my_skins = [
                 "skin-blue",
-                "skin-black",
+                "skin-white",
                 "skin-red",
                 "skin-yellow",
                 "skin-purple",
                 "skin-green",
                 "skin-blue-light",
-                "skin-black-light",
+                "skin-white-light",
                 "skin-red-light",
                 "skin-yellow-light",
                 "skin-purple-light",
@@ -367,7 +379,7 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
             if (lastlogin) {
                 lastlogin = JSON.parse(lastlogin);
                 $("#profile-img").attr("src", Backend.api.cdnurl(lastlogin.avatar));
-                $("#pd-form-username").val(lastlogin.username);
+                $("#profile-name").val(lastlogin.username);
             }
 
             //让错误提示框居中

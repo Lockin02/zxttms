@@ -2,7 +2,10 @@
 
 namespace app\admin\controller;
 
+use app\admin\model\AdminLog;
 use app\common\controller\Backend;
+use think\Config;
+use think\Hook;
 use think\Validate;
 
 /**
@@ -43,7 +46,7 @@ class Index extends Backend
         $url = $this->request->get('url', 'index/index');
         if ($this->auth->isLogin())
         {
-            $this->error(__("You've logged in, do not login again"), $url);
+            $this->success(__("You've logged in, do not login again"), $url);
         }
         if ($this->request->isPost())
         {
@@ -61,13 +64,18 @@ class Index extends Backend
                 'password'  => $password,
                 '__token__' => $token,
             ];
-            $validate = new Validate($rule);
+            if (Config::get('fastadmin.login_captcha'))
+            {
+                $rule['captcha'] = 'require|captcha';
+                $data['captcha'] = $this->request->post('captcha');
+            }
+            $validate = new Validate($rule, [], ['username' => __('Username'), 'password' => __('Password'), 'captcha' => __('Captcha')]);
             $result = $validate->check($data);
             if (!$result)
             {
                 $this->error($validate->getError(), $url, ['token' => $this->request->token()]);
             }
-            \app\admin\model\AdminLog::setTitle(__('Login'));
+            AdminLog::setTitle(__('Login'));
             $result = $this->auth->login($username, $password, $keeplogin ? 86400 : 0);
             if ($result === true)
             {
@@ -84,7 +92,10 @@ class Index extends Backend
         {
             $this->redirect($url);
         }
-        \think\Hook::listen("login_init", $this->request);
+        $background = cdnurl(Config::get('fastadmin.login_background'));
+        $this->view->assign('background', $background);
+        $this->view->assign('title', __('Login'));
+        Hook::listen("login_init", $this->request);
         return $this->view->fetch();
     }
 
@@ -96,4 +107,5 @@ class Index extends Backend
         $this->auth->logout();
         $this->success(__('Logout successful'), 'index/login');
     }
-}   
+
+}

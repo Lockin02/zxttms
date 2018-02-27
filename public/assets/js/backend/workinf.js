@@ -21,6 +21,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                paginationVAlign: 'top',
                 columns: [
                     [
                         {checkbox: true},
@@ -44,7 +45,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'pay_grade', title: __('Pay_grade'), formatter: Table.api.formatter.paygrade},
                         {field: 'iTV_option', title: __('Itv_option'), formatter: Table.api.formatter.itvoption, searchList: {1:__('Standard Definition'), 2:__('High Definition')}},
                         {field: 'eTV_license_count', title: __('Etv_license_count')},
-                        {field: 'iTV_count', title: __('Itv_count')},
+                        {field: 'iTV_count', title: __('Itv_count'), formatter: Table.api.formatter.itvcount},
+                        {field: 'custom_fee', title: __('Custom_Fee'), formatter: Table.api.formatter.customfee},
                         {field: 'reply_status', title: __('Reply_status'), formatter: Table.api.formatter.replystatus, searchList: {'0': __('Noreceipt'), '1':__('Hadreceipt'), '2':__('Receipterror')}},
                         {field: 'complete_time', title: __('Complete_time'), formatter: Table.api.formatter.date, cellStyle: function () {return {css: {"min-width": "150px"}}}, operate: 'RANGE', addclass: 'datetimerange'},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate, cellStyle: function () {return {css: {"min-width": "150px"}}},
@@ -82,6 +84,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 .fail(function(data) {
                     alert(__('Operation failed'));
                 });
+            });
+
+            $(table).on('check.bs.table', function (e, row, element){// 选中加深颜色方法
+                $(element).parent().parent().addClass('success');
+            });
+            $(table).on('uncheck.bs.table', function (e, row, element){// 不选去除加深样式
+                $(element).parent().parent().removeClass('success');
             });
 
             // 为表格绑定事件
