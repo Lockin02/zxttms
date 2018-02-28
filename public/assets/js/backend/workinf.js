@@ -22,6 +22,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 pk: 'id',
                 sortName: 'id',
                 paginationVAlign: 'top',
+                maintainSelected: true,
                 columns: [
                     [
                         {checkbox: true},
@@ -57,7 +58,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
                             formatter: function (value, row, index) {
                                 if (row.reply_status != "1") {
-                                    return '<a val="/zxttms/public/api/Gdbnet/replyoper/operId/'+row.oper_id+' " class="btn btn-xs btn-success confirm_oper_button" title="回单">回单</a>';
+                                    return '<a val="/zxttms/public/api.php/Gdbnet/replyoper/operId/'+row.oper_id+' " class="btn btn-xs btn-success confirm_oper_button" title="回单">回单</a>';
                                 }
                             }
                         }

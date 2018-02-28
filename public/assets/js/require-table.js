@@ -419,6 +419,9 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 datetime: function (value, row, index) {
                     return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD HH:mm:ss") : __('None');
                 },
+                date: function (value, row, index) {
+                    return value ? Moment(parseInt(value) * 1000).format("YYYY-MM-DD") : __('None');
+                },
                 operate: function (value, row, index) {
                     var table = this.table;
                     // 操作配置
