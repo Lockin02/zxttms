@@ -1,5 +1,6 @@
 <?php
 namespace app\api\controller;
+use think\Log;
 use think\Request;
 use think\Db;
 
@@ -96,7 +97,7 @@ class Gdbnet
 			        break;
 		        // 停复机 变更 拆机 (更新)
 		        default:
-			        Db::name('work_inf')->where('oper_id', $addData['oper_id'])->update($addData);
+			        Db::name('work_inf')->where('accNbr', $addData['accNbr'])->update($addData);
 			        break;
 	        }
 	        // 工单流水插入数据
@@ -128,6 +129,7 @@ class Gdbnet
 				'result'	=>	'21000',
 				'hashcode'	=>	strtoupper(md5($addData['oper_id'].'21000'.config('SHARE_KEY')))
 			];
+	        Log::write('领航请求工单插入有误,工单operid为'.$addData['oper_id']);
 			Db::rollback();
             return xml($error_outputdata, 200, $this->header_arr, $this->option_arr);
         }	
@@ -156,9 +158,10 @@ class Gdbnet
 	        	Db::startTrans();
 	        	Db::name('work_inf')->where('oper_id',$operId)->update(['reply_status'=>1, 'complete_time'=>$addData['complete_time']]);
 	        	Db::name('work_seq')->insert($addData);
-	        } catch (Exception $e) {
+	        } catch (\think\exception\PDOException $e) {
 				Db::rollback();
-	        	return json(['code'=>0, 'message'=>'回单失败']);
+		        Log::write('回单有误,工单operid为'.$operId);
+		        return json(['code'=>0, 'message'=>'回单失败']);
 	        }
 	        Db::commit();
 	        return json(['code'=>200, 'message'=>'回单成功']);

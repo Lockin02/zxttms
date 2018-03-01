@@ -10,7 +10,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     edit_url: 'workinf/edit',
                     del_url: 'workinf/del',
                     multi_url: 'workinf/multi',
-                    table: 'work_inf',
+                    table: 'work_inf'
                 }
             });
 
@@ -53,7 +53,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate, cellStyle: function () {return {css: {"min-width": "150px"}}},
                             buttons: [
                                 {name: 'detail', text: __('Detail'), classname: 'btn btn-xs btn-warning btn-detail btn-dialog', icon: 'fa fa-list', url: 'workinf/detail'}
-                            ],
+                            ]
                         },
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
                             formatter: function (value, row, index) {
@@ -67,12 +67,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
 
             // 回单
-            $(document).on('click', '.confirm_oper_button', function(event) {
+            $(document).on('click', '.confirm_oper_button', function() {
                 var $url = $(this).attr("val");
                 $.ajax({
                     url: $url,
                     type: 'GET',
-                    dataType: 'json',
+                    dataType: 'json'
                 })
                 .done(function(data) {
                     if (data['code'] == 200) {
@@ -82,7 +82,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     }
                     $("#orderlistTab").find(".btn-refresh").trigger("click");//点击tab刷新
                 })
-                .fail(function(data) {
+                .fail(function() {
                     alert(__('Operation failed'));
                 });
             });
@@ -92,6 +92,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
             $(table).on('uncheck.bs.table', function (e, row, element){// 不选去除加深样式
                 $(element).parent().parent().removeClass('success');
+            });
+
+            // 固定时间刷新页面
+            $(function(){
+                function auto_refresh(){
+                    $("#orderlistTab").find(".btn-refresh").trigger("click");//点击tab刷新
+                }
+                setInterval(auto_refresh,10000);
             });
 
             // 为表格绑定事件
