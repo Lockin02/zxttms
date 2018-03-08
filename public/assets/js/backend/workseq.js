@@ -10,7 +10,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     edit_url: 'workseq/edit',
                     del_url: 'workseq/del',
                     multi_url: 'workseq/multi',
-                    table: 'work_seq'
+                    table: 'work_seq',
                 }
             });
 
@@ -22,6 +22,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 pk: 'id',
                 sortName: 'id',
                 paginationVAlign: 'top',
+                exportDataType:'all',
+                exportTypes:['excel'],  //导出文件类型  
+                exportOptions:{  
+                   ignoreColumn: [0,1,25,26,27],  //忽略某一列的索引  
+                   fileName: '工单流水',  //文件名称设置  
+                },  
                 columns: [
                     [
                         {checkbox: true},
@@ -48,7 +54,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'iTV_count', title: __('Itv_count')},
                         {field: 'custom_fee', title: __('Custom_Fee'), formatter: Table.api.formatter.customfee},
                         {field: 'reply_status', title: __('Reply_status'), formatter: Table.api.formatter.replystatus, searchList: {'0': __('Noreceipt'), '1':__('Hadreceipt'), '2':__('Receipterror')}},
-                        {field: 'complete_time', title: __('Complete_time'), formatter: Table.api.formatter.date, cellStyle: function () {return {css: {"min-width": "150px"}}}, operate: 'RANGE', addclass: 'datetimerange'}
+                        {field: 'complete_time', title: __('Complete_time'), formatter: Table.api.formatter.date, cellStyle: function () {return {css: {"min-width": "150px"}}}, operate: 'RANGE', addclass: 'datetimerange'},
                     ]
                 ]
             });
@@ -61,12 +67,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
 
             // 固定时间刷新页面
-            $(function(){
-                function auto_refresh2(){
-                    $("#myTabContent").find(".btn-refresh").trigger("click");//点击tab刷新
-                }
-                setInterval(auto_refresh2,10000);
-            });
+            // $(function(){
+            //     function auto_refresh(){
+            //         $("#myTabContent").find(".btn-refresh").trigger("click");//点击tab刷新
+            //     }
+            //     setInterval(auto_refresh,10000);
+            // });
 
             // 为表格绑定事件
             Table.api.bindevent(table);

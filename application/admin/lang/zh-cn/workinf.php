@@ -41,4 +41,5 @@ return [
     'Zero a Month'      => '0元/月',
     'Five a Month'      => '5元/月',
     'Ten a Month'       => '10元/月',
+    'Replyoper'         => '回单',
 ];

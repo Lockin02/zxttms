@@ -57,6 +57,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
             refreshbtn: '.btn-refresh',
             addbtn: '.btn-add',
             editbtn: '.btn-edit',
+            detailbtn: '.btn-detail',
             delbtn: '.btn-del',
             importbtn: '.btn-import',
             multibtn: '.btn-multi',
@@ -210,6 +211,17 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                                 Layer.close(index);
                             }
                     );
+                });
+                // 项目需要 批量详情按钮事件
+                $(toolbar).on('click', Table.config.detailbtn, function () {
+                    var that = this;
+                    //循环弹出多个编辑框
+                    $.each(table.bootstrapTable('getSelections'), function (index, row) {
+                        var url = options.extend.detail_url;
+                        row = $.extend({}, row ? row : {}, {ids: row[options.pk]});
+                        var url = Table.api.replaceurl(url, row, table);
+                        Fast.api.open(url, __('Detail'), $(that).data() || {});
+                    });
                 });
                 // 拖拽排序
                 require(['dragsort'], function () {
@@ -438,7 +450,35 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     if (options.extend.del_url !== '') {
                         buttons.push({name: 'del', icon: 'fa fa-trash', title: __('Del'), classname: 'btn btn-xs btn-danger btn-delone'});
                     }
+                    
                     return Table.api.buttonlink(this, buttons, value, row, index, 'operate');
+                },
+                // 项目需要 自定义工单列表操作按钮
+                workinfoperate: function(value, row, index){
+                    var table = this.table;
+                    // 操作配置
+                    var options = table ? table.bootstrapTable('getOptions') : {};
+                    // 默认按钮组
+                    var buttons = $.extend([], this.buttons || []);
+
+                    // 项目需要 自建回单按钮
+                    if (options.extend.replyoper_url !== '' && row.reply_status != "1") { // 回单状态不为1时可回单
+                        buttons.push({name: 'replyoper', text:__('Replyoper'), icon: 'fa fa-rocket', title: __('Replyoper'), classname: 'btn btn-xs btn-success btn-replyoper', url: options.extend.replyoper_url});
+                    }
+                    // 项目需要 自建详情按钮
+                    if (options.extend.detail_url !== '') {
+                        buttons.push({name: 'detail', icon: 'fa fa-list', title: __('Detail'), classname: 'btn btn-xs btn-warning btn-detail btn-dialog', url: options.extend.detail_url});
+                    }
+                    if (options.extend.dragsort_url !== '') {
+                        buttons.push({name: 'dragsort', icon: 'fa fa-arrows', title: __('Drag to sort'), classname: 'btn btn-xs btn-primary btn-dragsort'});
+                    }
+                    if (options.extend.edit_url !== '') {
+                        buttons.push({name: 'edit', icon: 'fa fa-pencil', title: __('Edit'), classname: 'btn btn-xs btn-success btn-editone', url: options.extend.edit_url});
+                    }
+                    if (options.extend.del_url !== '') {
+                        buttons.push({name: 'del', icon: 'fa fa-trash', title: __('Del'), classname: 'btn btn-xs btn-danger btn-delone'});
+                    }
+                    return Table.api.workinfbuttonlink(this, buttons, value, row, index, 'operate');
                 },
                 buttons: function (value, row, index) {
                     // 默认按钮组
@@ -568,6 +608,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                 var fieldIndex = column.fieldIndex;
 
                 $.each(buttons, function (i, j) {
+
                     if (type === 'operate') {
                         if (j.name === 'dragsort' && typeof row[Table.config.dragsortfield] === 'undefined') {
                             return true;
@@ -576,6 +617,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                             return true;
                         }
                     }
+
                     var attr = table.data(type + "-" + j.name);
                     if (typeof attr === 'undefined' || attr) {
                         url = j.url ? j.url : '';
@@ -588,6 +630,49 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                         confirm = j.confirm ? 'data-confirm="' + j.confirm + '"' : '';
                         extend = j.extend ? j.extend : '';
                         html.push('<a href="' + url + '" class="' + classname + '" ' + (confirm ? confirm + ' ' : '') + (refresh ? refresh + ' ' : '') + extend + ' title="' + title + '" data-table-id="' + (table ? table.attr("id") : '') + '" data-field-index="' + fieldIndex + '" data-row-index="' + index + '" data-button-index="' + i + '"><i class="' + icon + '"></i>' + (text ? ' ' + text : '') + '</a>');
+                    }
+                });
+                return html.join(' ');
+            },
+            // 项目需要 新增button生成形式
+            workinfbuttonlink: function (column, buttons, value, row, index, type) {
+                var table = column.table;
+                type = typeof type === 'undefined' ? 'buttons' : type;
+                var options = table ? table.bootstrapTable('getOptions') : {};
+                var html = [];
+                var url, classname, icon, text, title, extend;
+                var fieldIndex = column.fieldIndex;
+
+                $.each(buttons, function (i, j) {
+
+                    if (type === 'operate') {
+                        if (j.name === 'dragsort' && typeof row[Table.config.dragsortfield] === 'undefined') {
+                            return true;
+                        }
+                        if (['add', 'edit', 'del', 'multi', 'dragsort'].indexOf(j.name) > -1 && !options.extend[j.name + "_url"]) {
+                            return true;
+                        }
+                    }
+
+                    var attr = table.data(type + "-" + j.name);
+                    if (typeof attr === 'undefined' || attr) {
+                        url = j.url ? j.url : '';
+                        if (j.name != 'replyoper') {
+                            url = url ? Fast.api.fixurl(Table.api.replaceurl(url, row, table)) : 'javascript:;';
+                            val = '';
+                        }else{
+                            val = url ? Fast.api.fixurl(Table.api.replaceurl(url, row, table)) : '';
+                            url = 'javascript:;';
+                        }
+
+                        classname = j.classname ? j.classname : 'btn-primary btn-' + name + 'one';
+                        icon = j.icon ? j.icon : '';
+                        text = j.text ? j.text : '';
+                        title = j.title ? j.title : text;
+                        refresh = j.refresh ? 'data-refresh="' + j.refresh + '"' : '';
+                        confirm = j.confirm ? 'data-confirm="' + j.confirm + '"' : '';
+                        extend = j.extend ? j.extend : '';
+                        html.push('<a href="' + url + '" val="' + val + '" class="' + classname + '" ' + (confirm ? confirm + ' ' : '') + (refresh ? refresh + ' ' : '') + extend + ' title="' + title + '" data-table-id="' + (table ? table.attr("id") : '') + '" data-field-index="' + fieldIndex + '" data-row-index="' + index + '" data-button-index="' + i + '"><i class="' + icon + '"></i>' + (text ? ' ' + text : '') + '</a>');
                     }
                 });
                 return html.join(' ');

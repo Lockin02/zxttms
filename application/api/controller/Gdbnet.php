@@ -97,7 +97,7 @@ class Gdbnet
 			        break;
 		        // 停复机 变更 拆机 (更新)
 		        default:
-			        Db::name('work_inf')->where('accNbr', $addData['accNbr'])->update($addData);
+			        Db::name('work_inf')->where('product_id', $addData['Product_id'])->update($addData);
 			        break;
 	        }
 	        // 工单流水插入数据

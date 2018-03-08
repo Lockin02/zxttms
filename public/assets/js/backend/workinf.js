@@ -10,7 +10,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     edit_url: 'workinf/edit',
                     del_url: 'workinf/del',
                     multi_url: 'workinf/multi',
-                    table: 'work_inf'
+                    detail_url: 'workinf/detail',
+                    replyoper_url: 'workinf/replyoper',
+                    table: 'work_inf',
                 }
             });
 
@@ -23,6 +25,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 sortName: 'id',
                 paginationVAlign: 'top',
                 maintainSelected: true,
+                singleSelect    : true,  
+                exportDataType:'all',
+                exportTypes:['excel'],  //导出文件类型  
+                exportOptions:{  
+                   ignoreColumn: [0,1,25,26,27],  //忽略某一列的索引  
+                   fileName: '工单列表',  //文件名称设置  
+                },  
                 columns: [
                     [
                         {checkbox: true},
@@ -50,29 +59,19 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'custom_fee', title: __('Custom_Fee'), formatter: Table.api.formatter.customfee},
                         {field: 'reply_status', title: __('Reply_status'), formatter: Table.api.formatter.replystatus, searchList: {'0': __('Noreceipt'), '1':__('Hadreceipt'), '2':__('Receipterror')}},
                         {field: 'complete_time', title: __('Complete_time'), formatter: Table.api.formatter.date, cellStyle: function () {return {css: {"min-width": "150px"}}}, operate: 'RANGE', addclass: 'datetimerange'},
-                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate, cellStyle: function () {return {css: {"min-width": "150px"}}},
-                            buttons: [
-                                {name: 'detail', text: __('Detail'), classname: 'btn btn-xs btn-warning btn-detail btn-dialog', icon: 'fa fa-list', url: 'workinf/detail'}
-                            ]
-                        },
-                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
-                            formatter: function (value, row, index) {
-                                if (row.reply_status != "1") {
-                                    return '<a val="/zxttms/public/api.php/Gdbnet/replyoper/operId/'+row.oper_id+' " class="btn btn-xs btn-success confirm_oper_button" title="回单">回单</a>';
-                                }
-                            }
+                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.workinfoperate, cellStyle: function () {return {css: {"min-width": "200px"}}},
                         }
                     ]
                 ]
             });
 
             // 回单
-            $(document).on('click', '.confirm_oper_button', function() {
+            $(document).on('click', '.btn-replyoper', function(event) {
                 var $url = $(this).attr("val");
                 $.ajax({
                     url: $url,
                     type: 'GET',
-                    dataType: 'json'
+                    dataType: 'json',
                 })
                 .done(function(data) {
                     if (data['code'] == 200) {
@@ -82,7 +81,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     }
                     $("#orderlistTab").find(".btn-refresh").trigger("click");//点击tab刷新
                 })
-                .fail(function() {
+                .fail(function(data) {
                     alert(__('Operation failed'));
                 });
             });
@@ -94,14 +93,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 $(element).parent().parent().removeClass('success');
             });
 
-            // 固定时间刷新页面
-            $(function(){
-                function auto_refresh(){
-                    $("#orderlistTab").find(".btn-refresh").trigger("click");//点击tab刷新
-                }
-                setInterval(auto_refresh,10000);
-            });
-
             // 为表格绑定事件
             Table.api.bindevent(table);
         },
@@ -109,6 +100,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         edit: function () {
+            Controller.api.bindevent();
+        },
+        detail: function() {
             Controller.api.bindevent();
         },
         api: {

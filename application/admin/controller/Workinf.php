@@ -6,6 +6,7 @@ use app\common\controller\Backend;
 
 use think\Controller;
 use think\Request;
+use think\Db;
 
 /**
  * 
@@ -46,24 +47,23 @@ class Workinf extends Backend
         if ($this->request->isAjax())
         {
             //如果发送的来源是Selectpage，则转发到Selectpage
-            if ($this->request->request('pkey_name'))
-            {
-                return $this->selectpage();
-            }
+            // if ($this->request->request('pkey_name'))
+            // {
+            //     return $this->selectpage();
+            // }
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $total = $this->model
                     ->where($where)
-                    ->where($this->where_condition)
+                    // ->where($this->where_condition)
                     ->order($sort, $order)
                     ->count();
 
             $list = $this->model
                     ->where($where)
-                    ->where($this->where_condition)
+                    // ->where($this->where_condition)
                     ->order($sort, $order)
                     ->limit($offset, $limit)
                     ->select();
-            $sql = $this->model->getlastsql();
             $result = array("total" => $total, "rows" => $list);
 
             return json($result);
@@ -147,4 +147,61 @@ class Workinf extends Backend
         return $this->view->fetch();
     }
 
+    // 回单接口
+    public function replyoper($ids){
+        $operId_arr = Db::name('work_inf')->where('id',$ids)->field('oper_id')->find();
+        if (empty($operId_arr)) {
+            return json(['code'=>0, 'message'=>'获取operId失败']);
+        }else{
+            $operId = $operId_arr['oper_id'];
+        }
+
+        // 回单调用
+        $nowtime = date("Y-m-d H:i:s");
+        $nowhashcode = strtoupper(md5('gdbnet.replyOper'.$operId.config('APP_SYSTEM_ID').'20000'.$nowtime.config('SHARE_KEY')));
+        $nowtime = rawurlencode($nowtime);//url转义
+        $url_replyoper = config('Bnet_URL').'?servName=gdbnet.replyOper&operId='.$operId.'&appSystemId='.config('APP_SYSTEM_ID').'&result=20000&timeStamp='.$nowtime.'&hashcode='.$nowhashcode;
+        $res = $this->https_request($url_replyoper);
+        // xml转数组
+        libxml_disable_entity_loader(true);
+        $returndata = json_decode(json_encode(simplexml_load_string($res, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+
+        if (isset($returndata['operPublicInfo']) && $returndata['operPublicInfo']['result'] == 10000) {
+            // 回单数据处理入库
+            $addData = Db::name('work_inf')->where('oper_id="'.$operId.'"')->find();
+            unset($addData['id']);
+            $addData['hashcode'] = $nowhashcode;
+            $addData['complete_time'] = time();
+            $addData['reply_status'] = 1;
+            try {
+                Db::startTrans();
+                Db::name('work_inf')->where('oper_id',$operId)->update(['reply_status'=>1, 'complete_time'=>$addData['complete_time']]);
+                Db::name('work_seq')->insert($addData);
+            } catch (\think\exception\PDOException $e) {
+                Db::rollback();
+                Log::write('回单有误,工单operid为'.$operId);
+                return json(['code'=>0, 'message'=>'回单失败']);
+            }
+            Db::commit();
+            return json(['code'=>200, 'message'=>'回单成功']);
+        }else{
+            return json(['code'=>0, 'message'=>'连接平台回单失败']);
+        }
+    }
+
+    // curl请求
+    private function https_request($url, $data=null){
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+        if (!empty($data)){
+            curl_setopt($curl, CURLOPT_POST, 1);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        }
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        $output = curl_exec($curl);
+        curl_close($curl);
+        return $output;
+    }
 }

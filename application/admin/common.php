@@ -87,10 +87,10 @@ function build_category_select($name, $type, $selected = null, $attr = [], $head
  * @return string
  */
 function build_toolbar($btns = NULL, $attr = [])
-{
+{   
     $auth = \app\admin\library\Auth::instance();
     $controller = str_replace('.', '/', strtolower(think\Request::instance()->controller()));
-    $btns = $btns ? $btns : ['refresh', 'add', 'edit', 'del', 'import'];
+    $btns = $btns ? $btns : ['refresh', 'add', 'edit', 'del', 'import','detail'];
     $btns = is_array($btns) ? $btns : explode(',', $btns);
     $index = array_search('delete', $btns);
     if ($index !== FALSE)
@@ -103,6 +103,8 @@ function build_toolbar($btns = NULL, $attr = [])
         'edit'    => ['javascript:;', 'btn btn-success btn-edit btn-disabled disabled', 'fa fa-pencil', __('Edit'), __('Edit')],
         'del'     => ['javascript:;', 'btn btn-danger btn-del btn-disabled disabled', 'fa fa-trash', __('Delete'), __('Delete')],
         'import'  => ['javascript:;', 'btn btn-danger btn-import', 'fa fa-upload', __('Import'), __('Import')],
+        'detail'    => ['javascript:;', 'btn btn-warning btn-detail btn-disabled disabled', 'fa fa-list', __('Detail'), __('Detail')],
+
     ];
     $btnAttr = array_merge($btnAttr, $attr);
     $html = [];

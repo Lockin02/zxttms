@@ -256,4 +256,8 @@ return [
         'version'          => '1.0.0.20180222_beta',
         'api_url'          => 'http://api.fastadmin.net',
     ],
+    // 工单对接信息
+    'SHARE_KEY'         =>  '',
+    'APP_SYSTEM_ID'     =>  '',
+    'Bnet_URL'          =>  '',
 ];
