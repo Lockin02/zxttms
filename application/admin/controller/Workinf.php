@@ -7,6 +7,8 @@ use app\common\controller\Backend;
 use think\Controller;
 use think\Request;
 use think\Db;
+use PHPEXCEL;
+use PHPExcel_IOFactory;
 
 /**
  * 
@@ -46,21 +48,17 @@ class Workinf extends Backend
         $this->request->filter(['strip_tags']);
         if ($this->request->isAjax())
         {
-            //如果发送的来源是Selectpage，则转发到Selectpage
-            // if ($this->request->request('pkey_name'))
-            // {
-            //     return $this->selectpage();
-            // }
+
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $total = $this->model
                     ->where($where)
-                    // ->where($this->where_condition)
+                     ->where($this->where_condition)
                     ->order($sort, $order)
                     ->count();
 
             $list = $this->model
                     ->where($where)
-                    // ->where($this->where_condition)
+                     ->where($this->where_condition)
                     ->order($sort, $order)
                     ->limit($offset, $limit)
                     ->select();
@@ -126,7 +124,12 @@ class Workinf extends Backend
         $this->view->assign("row", $row);
         return $this->view->fetch();
     }
-    
+
+	/**
+     * 详情
+     * @param $ids
+     * @return result
+     */
     public function detail($ids){
         $row = $this->model->get($ids);
         if (!$row)
@@ -145,6 +148,56 @@ class Workinf extends Backend
         $row['reply_status_name'] = common_convert_replystatusname($row['reply_status']);
         $this->view->assign("row", $row);
         return $this->view->fetch();
+    }
+
+    public function excelout(){
+        $params = $this->request->post();
+        foreach($params as $key => $value){
+            if(!empty($value)){
+                $where[$key] = $value;
+            }
+        }
+        $where = [];
+        if(!empty($params['complete_time'])){
+            $where['complete_time'] = array('between',[strtotime($params['daterangepicker_start']),strtotime($params['daterangepicker_end'])]);
+            unset($where['daterangepicker_start']);
+            unset($where['daterangepicker_end']);
+        }
+        $column = Db::name('work_inf')->query('SHOW COLUMNS from gdbnet_work_inf');
+//        $list = Db::name('work_inf')->where($where)->select();
+//        echo json_encode($list);
+//        die();
+        $path = dirname(__FILE__); //找到当前脚本所在路径
+        $PHPExcel = new \PHPExcel(); //实例化PHPExcel类，类似于在桌面上新建一个Excel表格
+        $PHPSheet = $PHPExcel->getActiveSheet(); //获得当前活动sheet的操作对象
+        $PHPSheet->setTitle('工单列表'); //给当前活动sheet设置名称
+
+        $PHPExcel->getActiveSheet(0)->setCellValue('A1','姓名')->setCellValue('B1','分数');
+//        $PHPExcel->setCellValue('A2','张三')->setCellValue('B2','50');
+        $fileName = time();//导出excal 文件名称
+        $xlsTitle = iconv('utf-8', 'gb2312', '订单列表');//文件名称
+        header('pragma:public');
+        header('Content-type:application/vnd.ms-excel;charset=utf-8;name="'.$xlsTitle.'.xlsx"');
+        header("Content-Disposition:attachment;filename=$fileName.xlsx");//attachment新窗口打印inline本窗口打印
+        header('Cache-Control: max-age=0');
+        $objWriter = new \PHPExcel_Writer_Excel2007($PHPExcel);
+        $response = array(
+            'success' => true,
+            'url' => $this->saveExcelToLocalFile($objWriter, $fileName)
+        );
+        if ($response) {
+            echo json_encode($response);
+        }else{
+
+        }
+    }
+
+    //ajax导出用到的方法
+    function saveExcelToLocalFile($objWriter,$filename){
+
+        $filePath = dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/'.$filename.'.xlsx';
+        $objWriter->save($filePath);
+        return $filePath;
     }
 
     // 回单接口

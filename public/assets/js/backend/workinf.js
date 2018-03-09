@@ -27,11 +27,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 maintainSelected: true,
                 singleSelect    : true,  
                 exportDataType:'all',
-                exportTypes:['excel'],  //导出文件类型  
-                exportOptions:{  
+                exportTypes:['excel'],  //导出文件类型
+                exportOptions:{
                    ignoreColumn: [0,1,25,26,27],  //忽略某一列的索引  
                    fileName: '工单列表',  //文件名称设置  
-                },  
+                },
                 columns: [
                     [
                         {checkbox: true},
@@ -82,9 +82,31 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     $("#orderlistTab").find(".btn-refresh").trigger("click");//点击tab刷新
                 })
                 .fail(function(data) {
+
                     alert(__('Operation failed'));
                 });
             });
+
+            // 自定义导出
+            $(document).on('click','.btn-myexcelout', function(){
+                var data = $(':text, select').serializeArray();
+                console.log(data);
+                $.ajax({
+                    url: 'workinf/excelout',
+                    type: 'post',
+                    data: data,
+                    dataType: "json",
+                    success:function(returndata){
+                        console.log(returndata);
+                        window.open(returndata['url']);
+                    },
+                    error:function(){
+                        console.log('error');
+                    }
+                });
+            });
+
+
 
             $(table).on('check.bs.table', function (e, row, element){// 选中加深颜色方法
                 $(element).parent().parent().addClass('success');

@@ -63,6 +63,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
             multibtn: '.btn-multi',
             disabledbtn: '.btn-disabled',
             editonebtn: '.btn-editone',
+            detailonebtn: '.btn-detailone',
             dragsortfield: 'weigh',
         },
         api: {
@@ -322,6 +323,17 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                         var url = options.extend.edit_url;
                         Fast.api.open(Table.api.replaceurl(url, row, table), __('Edit'), $(this).data() || {});
                     },
+                    // 项目需要 详情操作
+                    'click .btn-detailone': function (e, value, row, index) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        var table = $(this).closest('table');
+                        var options = table.bootstrapTable('getOptions');
+                        var ids = row[options.pk];
+                        row = $.extend({}, row ? row : {}, {ids: ids});
+                        var url = options.extend.edit_url;
+                        Fast.api.open(Table.api.replaceurl(url, row, table), __('Detail'), $(this).data() || {});
+                    },
                     'click .btn-delone': function (e, value, row, index) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -467,7 +479,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                     }
                     // 项目需要 自建详情按钮
                     if (options.extend.detail_url !== '') {
-                        buttons.push({name: 'detail', icon: 'fa fa-list', title: __('Detail'), classname: 'btn btn-xs btn-warning btn-detail btn-dialog', url: options.extend.detail_url});
+                        buttons.push({name: 'detail', icon: 'fa fa-list', title: __('Detail'), classname: 'btn btn-xs btn-warning btn-detailone', url: options.extend.detail_url});
                     }
                     if (options.extend.dragsort_url !== '') {
                         buttons.push({name: 'dragsort', icon: 'fa fa-arrows', title: __('Drag to sort'), classname: 'btn btn-xs btn-primary btn-dragsort'});
@@ -649,7 +661,7 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                         if (j.name === 'dragsort' && typeof row[Table.config.dragsortfield] === 'undefined') {
                             return true;
                         }
-                        if (['add', 'edit', 'del', 'multi', 'dragsort'].indexOf(j.name) > -1 && !options.extend[j.name + "_url"]) {
+                        if (['add', 'edit', 'del', 'multi', 'dragsort', 'detail'].indexOf(j.name) > -1 && !options.extend[j.name + "_url"]) {
                             return true;
                         }
                     }
