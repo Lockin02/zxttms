@@ -42,4 +42,8 @@ return [
     'Five a Month'      => '5元/月',
     'Ten a Month'       => '10元/月',
     'Replyoper'         => '回单',
+	'Hashcode'          => '哈希加密代码',
+	'Mac'               => 'Mac编号',
+	'Callback_time'     => '回调时间',
+	'Query_status'      => '查询状态',
 ];

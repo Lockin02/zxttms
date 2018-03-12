@@ -90,18 +90,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 自定义导出
             $(document).on('click','.btn-myexcelout', function(){
                 var data = $(':text, select').serializeArray();
-                console.log(data);
                 $.ajax({
                     url: 'workinf/excelout',
                     type: 'post',
                     data: data,
+                    timeout:600000,
                     dataType: "json",
                     success:function(returndata){
-                        console.log(returndata);
-                        window.open(returndata['url']);
+
+                        if(!returndata['success']){
+                            alert('导出失败1');
+                        }else{
+                            window.open(returndata['url'],'_blank');
+                        }
                     },
                     error:function(){
-                        console.log('error');
+                        alert('导出失败2');
                     }
                 });
             });
