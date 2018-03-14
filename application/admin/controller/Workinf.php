@@ -151,145 +151,127 @@ class Workinf extends Backend
     }
 
     public function excelout(){
-        set_time_limit(600);
-        // 查询列名
+        ini_set('max_execution_time', '0');
+        $datalist = Db::name('work_inf')->select();
         $column = Db::name('work_inf')->query('SHOW COLUMNS from gdbnet_work_inf');
-        $PHPExcel = new \PHPExcel(); //实例化PHPExcel类，类似于在桌面上新建一个Excel表格
-        $PHPSheet = $PHPExcel->getActiveSheet(0); //获得当前活动sheet的操作对象
-        $PHPSheet->setTitle('工单列表'); //给当前活动sheet设置名称
-
-        $CachedObject = new \PHPExcel_CachedObjectStorageFactory();
-        $Settings = new \PHPExcel_Settings();
-        $cacheMethod = $CachedObject::cache_in_memory_gzip;
-        $cacheSettings = array( ' memoryCacheSize ' => '30MB' );
-        $Settings::setCacheStorageMethod($cacheMethod, $cacheSettings);
-
-        // 写入内容数据
-        $key = ord("A");//A--65
-        $key2 = ord("@");//@--64
-        foreach($column as $v){
-            if($key>ord("Z")){
-                $key2 += 1;
-                $key = ord("A");
-                $colum = chr($key2).chr($key);//超过26个字母时才会启用
-            }else{
-                if($key2>=ord("A")){
-                    $colum = chr($key2).chr($key);//超过26个字母时才会启用
-                }else{
-                    $colum = chr($key);
-                }
-            }
-            $PHPSheet->setCellValue($colum.'1', __($v['Field']));
-            $key += 1;
+        foreach($column as $key=>$value){
+            $columns[] = __($value['Field']);
         }
-
-        $params = $this->request->post();
-        // 查询数据处理
-        $where = [];
-        foreach($params as $key => $value){
-            if(!empty($value)){
-                $where[$key] = $value;
-            }
-        }
-        if(!empty($params['complete_time'])){
-            $where['complete_time'] = array('between',[strtotime($params['daterangepicker_start']),strtotime($params['daterangepicker_end'])]);
-            unset($where['daterangepicker_start']);
-            unset($where['daterangepicker_end']);
-        }
-
-        // 查询列表
-        $allcount = Db::name('work_inf')->where($where)->count();
-        $pagelimit = 1000;
-
-        if($allcount>$pagelimit){
-            $startlimit = 0;
-            $selectcount = floor($allcount/$pagelimit);
-            for($startselectcount = 0; $startselectcount<=$selectcount;$startselectcount++){
-                $list = Db::name('work_inf')->where($where)->limit($startlimit,$pagelimit)->select();
-                foreach($list as $k=>$value){
-                    $key = ord("A");//A--65
-                    $key2 = ord("@");//@--64
-                    foreach($value as $vv){
-                        if($key>ord("Z")){
-                            $key2 += 1;
-                            $key = ord("A");
-                            $colum = chr($key2).chr($key);//超过26个字母时才会启用
-                        }else{
-                            if($key2>=ord("A")){
-                                $colum = chr($key2).chr($key);//超过26个字母时才会启用
-                            }else{
-                                $colum = chr($key);
-                            }
-                        }
-                        $PHPSheet->setCellValue($colum.($startlimit+$k+2), $vv);
-                        $key += 1;
-                    }
-                }
-                $startlimit = $startlimit + $pagelimit;
-            }
-        }else{
-            $list = Db::name('work_inf')->where($where)->select();
-            foreach($list as $k=>$value){
-                $key = ord("A");//A--65
-                $key2 = ord("@");//@--64
-                foreach($value as $vv){
-                    if($key>ord("Z")){
-                        $key2 += 1;
-                        $key = ord("A");
-                        $colum = chr($key2).chr($key);//超过26个字母时才会启用
-                    }else{
-                        if($key2>=ord("A")){
-                            $colum = chr($key2).chr($key);//超过26个字母时才会启用
-                        }else{
-                            $colum = chr($key);
-                        }
-                    }
-                    $PHPSheet->setCellValue($colum.($k+2), $vv);
-                    $key += 1;
-                }
-            }
-        }
-        $fileName = time().rand(100,999);//导出excal 文件名称
-        $xlsTitle = iconv('utf-8', 'gb2312', '订单列表');//文件名称
-        header('pragma:public');
-        header('Content-type:application/vnd.ms-excel;charset=utf-8;name="'.$xlsTitle.'.xlsx"');
-        header("Content-Disposition:attachment;filename=$fileName.xlsx");//attachment新窗口打印inline本窗口打印
-        header('Cache-Control: max-age=0');
-//        $objWriter = PHPExcel_IOFactory::createWriter($PHPExcel, 'Excel5');
-//        $objWriter->save('php://output');
-
-        $objWriter = new \PHPExcel_Writer_Excel2007($PHPExcel);
-        $result = $this->saveExcelToLocalFile($objWriter, $fileName);
+        $fileName = time().'.xlsx';
+        $result = $this->create_csv($columns, $datalist,$fileName);
         if($result){
-            echo 1;
+            $returndata['success'] = true;
+            $returndata['url'] = $result;
         }else{
-            echo 0;
+            $returndata['success'] = false;
         }
-        die();
-        $response = array(
-            'success' => true,
-            'url' => $this->saveExcelToLocalFile($objWriter, $fileName)
-        );
-        if ($response) {
-            echo json_encode($response);
-        }else{
-            $return_arr = [
-                'success' => false,
-            ];
-            echo json_encode($return_arr);
-        }
+        echo json_encode($returndata);
     }
 
     // excel保存并返回导出地址
-    function saveExcelToLocalFile($objWriter,$filename){
+    function create_csv($columns, $data, $filename){
+
         if(!file_exists(dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/')){
             mkdir(dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/',0777,true);
         }
-        $filePath = dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/'.$filename.'.xlsx';
-        $objWriter->save($filePath);
-        return true;
-        $outfilePath = config('excel_path').$filename.'.xlsx';
+        $filePath = dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/'.$filename;
+
+        $fp = fopen($filePath, 'w');
+        //输出Excel列名信息
+        foreach ($columns as $key => $value) {
+            //CSV的Excel支持GBK编码，一定要转换，否则乱码
+            $headlist[$key] = iconv('utf-8', 'gbk', $value);
+        }
+        //将数据通过fputcsv写到文件句柄
+        fputcsv($fp, $headlist);
+
+        //计数器
+        $num = 0;
+
+        //每隔$limit行，刷新一下输出buffer，不要太大，也不要太小
+        $limit = 100000;
+
+        //逐行取出数据，不浪费内存
+//        $count = count($data);
+//        for ($i = 0; $i < $count; $i++) {
+//
+//            $num++;
+//
+//            //刷新一下输出buffer，防止由于数据过多造成问题
+//            if ($limit == $num) {
+//                ob_flush();
+//                flush();
+//                $num = 0;
+//            }
+//
+//            $row = $data[$i];
+//            foreach ($row as $key => $value) {
+//                $row[$key] = iconv('utf-8', 'gbk', $value);
+//            }
+//
+//            fputcsv($fp, $row);
+//        }
+
+        $outfilePath = config('excel_path').$filename;
         return $outfilePath;
+    }
+
+    public function testout(){
+        set_time_limit(0);
+        $datalist = Db::name('work_inf')->select();
+        $column = Db::name('work_inf')->query('SHOW COLUMNS from gdbnet_work_inf');
+        foreach($column as $key=>$value){
+            $columns[] = __($value['Field']);
+        }
+        $fileName = time().'.xlsx';
+        $this->csv_export($datalist, $columns,$fileName);
+    }
+
+    function csv_export($data = array(), $headlist = array(), $fileName) {
+
+        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$fileName.'.csv"');
+        header('Cache-Control: max-age=0');
+
+        //打开PHP文件句柄,php://output 表示直接输出到浏览器
+        $fp = fopen('php://output', 'a');
+
+        //输出Excel列名信息
+        foreach ($headlist as $key => $value) {
+            //CSV的Excel支持GBK编码，一定要转换，否则乱码
+            $headlist[$key] = iconv('utf-8', 'gbk', $value);
+        }
+
+        //将数据通过fputcsv写到文件句柄
+        fputcsv($fp, $headlist);
+
+        //计数器
+        $num = 0;
+
+        //每隔$limit行，刷新一下输出buffer，不要太大，也不要太小
+        $limit = 100000;
+
+        //逐行取出数据，不浪费内存
+        $count = count($data);
+        for ($i = 0; $i < $count; $i++) {
+
+            $num++;
+
+            //刷新一下输出buffer，防止由于数据过多造成问题
+            if ($limit == $num) {
+                ob_flush();
+                flush();
+                $num = 0;
+            }
+
+            $row = $data[$i];
+            foreach ($row as $key => $value) {
+                $value = is_numeric($value)?$value."\t":$value;
+                $row[$key] = iconv('utf-8', 'gbk', $value);
+            }
+
+            fputcsv($fp, $row);
+        }
     }
 
     // 回单接口
