@@ -88,7 +88,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
 
             // 自定义导出
-            $(document).on('click','.btn-myexcelout', function(){
+            $(document).on('click','.btn-myexcelout', function(event){
                 var data = $(':text, select').serializeArray();
                 $.ajax({
                     url: 'workinf/excelout',
@@ -101,7 +101,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         if(!returndata['success']){
                             alert('导出失败1');
                         }else{
-                            window.open(returndata['url'],'_blank');
+                            // 防止反复添加
+                            if(document.getElementById('downexcel')){
+                                document.getElementById('downexcel').setAttribute('href', returndata['url']);
+                            }else{
+                                var a = document.createElement('a');
+                                a.setAttribute('href', returndata['url']);
+                                a.setAttribute('target', '_blank');
+                                a.setAttribute('id', 'downexcel');
+                                document.body.appendChild(a);
+                            }
+                            document.getElementById('downexcel').click();
+                            //window.open(returndata['url'],'_blank');
                         }
                     },
                     error:function(){
@@ -109,8 +120,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     }
                 });
             });
-
-
 
             $(table).on('check.bs.table', function (e, row, element){// 选中加深颜色方法
                 $(element).parent().parent().addClass('success');

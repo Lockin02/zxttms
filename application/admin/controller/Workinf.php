@@ -152,13 +152,52 @@ class Workinf extends Backend
 
     public function excelout(){
         ini_set('max_execution_time', '0');
-        $datalist = Db::name('work_inf')->select();
-        $column = Db::name('work_inf')->query('SHOW COLUMNS from gdbnet_work_inf');
-        foreach($column as $key=>$value){
-            $columns[] = __($value['Field']);
+
+        $params = $this->request->post();
+        foreach($params as $key => $value){
+            if(!empty($value)){
+                $where[$key] = $value;
+            }
         }
-        $fileName = time().'.xlsx';
-        $result = $this->create_csv($columns, $datalist,$fileName);
+        $where = [];
+        if(!empty($params['complete_time'])){
+            $where['complete_time'] = array('between',[strtotime($params['daterangepicker_start']),strtotime($params['daterangepicker_end'])]);
+            unset($where['daterangepicker_start']);
+            unset($where['daterangepicker_end']);
+        }
+
+        $field = "oper_id, timestamp, oper_type, product_id, BNet_Account, accNbr, cust_code, contract_id, cust_city_id, cust_install_addr, cust_name, cust_phone, contract_valid_date, installer_name, installer_phone, product_mix, pay_grade, iTV_option, eTV_license_count, iTV_count, custom_fee, reply_status, setup_person_name, setup_person_phone, mac, complete_time";
+        $datalist = Db::name('work_inf')->where($where)->field($field)->select();
+        $columns = [
+            __('oper_id'),          //工单ID
+            __('timestamp'),        //工单时间 时间戳转日期格式
+            __('oper_type'),        //工单类型
+            __('product_id'),       //客户产品号
+            __('BNet_Account'),     //商务领航号
+            __('accNbr'),           //eTV的接入号
+            __('cust_code'),        //客户名称
+            __('contract_id'),      //合同编号
+            __('cust_city_id'),     //客户所属区域
+            __('cust_install_addr'),//客户装机地址
+            __('cust_name'),        //客户姓名
+            __('cust_phone'),       //客户手机
+            __('contract_valid_date'), //合同有效期
+            __('installer_name'),   //揽装人姓名
+            __('installer_phone'),  //揽装人电话
+            __('product_mix'),      //产品组合
+            __('pay_grade'),        //资费档次
+            __('iTV_option'),       //iTV选项
+            __('eTV_license_count'),//eTV的license数量
+            __('iTV_count'),        //iTV数量
+            __('custom_fee'),       //定制费
+            __('reply_status'),     //回单状态
+            __('setup_person_name'),//安装人姓名
+            __('setup_person_phone'), //安装人电话
+            __('mac'),              //MAC地址
+            __('complete_time'),    //竣工时间
+        ];
+        $fileName = time().'.csv';
+        $result = $this->create_csv($columns, $datalist, $fileName);
         if($result){
             $returndata['success'] = true;
             $returndata['url'] = $result;
@@ -171,80 +210,19 @@ class Workinf extends Backend
     // excel保存并返回导出地址
     function create_csv($columns, $data, $filename){
 
-        if(!file_exists(dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/')){
-            mkdir(dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/',0777,true);
+        if(!file_exists(dirname(dirname(dirname(dirname(__FILE__)))).'/public/excel/')){
+            mkdir(dirname(dirname(dirname(dirname(__FILE__)))).'/public/excel/',0777,true);
         }
-        $filePath = dirname(dirname(dirname(dirname(__FILE__)))).'/Public/excel/'.$filename;
+        $filePath = dirname(dirname(dirname(dirname(__FILE__)))).'/public/excel/'.$filename;
 
-        $fp = fopen($filePath, 'w');
+        $fp = fopen($filePath,'a');
         //输出Excel列名信息
         foreach ($columns as $key => $value) {
             //CSV的Excel支持GBK编码，一定要转换，否则乱码
             $headlist[$key] = iconv('utf-8', 'gbk', $value);
         }
-        //将数据通过fputcsv写到文件句柄
-        fputcsv($fp, $headlist);
-
-        //计数器
-        $num = 0;
-
-        //每隔$limit行，刷新一下输出buffer，不要太大，也不要太小
-        $limit = 100000;
-
-        //逐行取出数据，不浪费内存
-//        $count = count($data);
-//        for ($i = 0; $i < $count; $i++) {
-//
-//            $num++;
-//
-//            //刷新一下输出buffer，防止由于数据过多造成问题
-//            if ($limit == $num) {
-//                ob_flush();
-//                flush();
-//                $num = 0;
-//            }
-//
-//            $row = $data[$i];
-//            foreach ($row as $key => $value) {
-//                $row[$key] = iconv('utf-8', 'gbk', $value);
-//            }
-//
-//            fputcsv($fp, $row);
-//        }
-
-        $outfilePath = config('excel_path').$filename;
-        return $outfilePath;
-    }
-
-    public function testout(){
-        set_time_limit(0);
-        $datalist = Db::name('work_inf')->select();
-        $column = Db::name('work_inf')->query('SHOW COLUMNS from gdbnet_work_inf');
-        foreach($column as $key=>$value){
-            $columns[] = __($value['Field']);
-        }
-        $fileName = time().'.xlsx';
-        $this->csv_export($datalist, $columns,$fileName);
-    }
-
-    function csv_export($data = array(), $headlist = array(), $fileName) {
-
-        header('Content-Type: application/vnd.ms-excel');
-        header('Content-Disposition: attachment;filename="'.$fileName.'.csv"');
-        header('Cache-Control: max-age=0');
-
-        //打开PHP文件句柄,php://output 表示直接输出到浏览器
-        $fp = fopen('php://output', 'a');
-
-        //输出Excel列名信息
-        foreach ($headlist as $key => $value) {
-            //CSV的Excel支持GBK编码，一定要转换，否则乱码
-            $headlist[$key] = iconv('utf-8', 'gbk', $value);
-        }
-
-        //将数据通过fputcsv写到文件句柄
-        fputcsv($fp, $headlist);
-
+        $headlist_str = implode(",", $headlist) . PHP_EOL;
+        fwrite($fp, $headlist_str);
         //计数器
         $num = 0;
 
@@ -266,12 +244,66 @@ class Workinf extends Backend
 
             $row = $data[$i];
             foreach ($row as $key => $value) {
-                $value = is_numeric($value)?$value."\t":$value;
+                switch($key){
+                    case 'oper_id':
+                        $value = $value."\t";
+                        break;
+                    case 'cust_city_id':
+                        $value = $value."\t";
+                        break;
+                    case 'timestamp':
+                        $value = date("Y-m-d H:i:s", $value);
+                        break;
+                    case 'oper_type':
+                        $value =  __($value);
+                        break;
+                    case 'product_mix':
+                        if($value == 1){
+                            $value = __('OneProduct');
+                        }
+                        break;
+                    case 'pay_grade':
+                        if($value == 1){
+                            $value = '50元/月';
+                        }elseif($value == 2){
+                            $value = '100元/月';
+                        }elseif($value == 3){
+                            $value = '15元/月';
+                        }elseif($value == 4){
+                            $value = '30元/月';
+                        }elseif($value == 5){
+                            $value = '40元/月';
+                        }else{
+                            $value = '15元/月';
+                        }
+                        break;
+                    case 'custom_fee':
+                        if($value == 0){
+                            $value = __('Zero a Month');
+                        }elseif($value == 5){
+                            $value = __('Five a Month');
+                        }elseif($value == 10){
+                            $value = __('Ten a Month');
+                        }
+                        break;
+                    case 'reply_status':
+                        if($value == 0){
+                            $value = __('Noreceipt');
+                        }elseif($value == 1){
+                            $value = __('Hadreceipt');
+                        }elseif($value == 2) {
+                            $value = __('Receipterror');
+                        }
+                        break;
+                }
                 $row[$key] = iconv('utf-8', 'gbk', $value);
             }
-
-            fputcsv($fp, $row);
+            $row_str = implode(",", $row) .PHP_EOL;
+            fwrite($fp, $row_str);
         }
+
+        $outfilePath = config('excel_path').$filename;
+        return $outfilePath;
     }
 
     // 回单接口
