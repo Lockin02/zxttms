@@ -24,6 +24,7 @@ class Workinf extends Backend
     protected $model = null;
     protected $searchFields = 'oper_id';
     protected $where_condition = [];
+    protected $noNeedRight = ['index'];
 
     public function _initialize()
     {

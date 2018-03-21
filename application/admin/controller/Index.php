@@ -29,7 +29,6 @@ class Index extends Backend
      */
     public function index()
     {
-        //
         $menulist = $this->auth->getSidebar([
            
                 ], $this->view->site['fixedpage']);
@@ -49,7 +48,7 @@ class Index extends Backend
             $this->success(__("You've logged in, do not login again"), $url);
         }
         if ($this->request->isPost())
-        {
+        {   
             $username = $this->request->post('username');
             $password = $this->request->post('password');
             $keeplogin = $this->request->post('keeplogin');

@@ -25,7 +25,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 sortName: 'id',
                 paginationVAlign: 'top',
                 maintainSelected: true,
-                singleSelect    : true,  
+                singleSelect    : true, 
+                showExport: false, 
                 exportDataType:'all',
                 exportTypes:['excel'],  //导出文件类型
                 exportOptions:{
