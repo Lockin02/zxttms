@@ -23,8 +23,6 @@ class Workinf extends Backend
      */
     protected $model = null;
     protected $searchFields = 'oper_id';
-    protected $where_condition = [];
-    protected $noNeedRight = ['index'];
 
     public function _initialize()
     {
@@ -363,5 +361,11 @@ class Workinf extends Backend
         $output = curl_exec($curl);
         curl_close($curl);
         return $output;
+    }
+
+    public function checklogin(){
+        $data['code'] = 200;
+        $data['msg'] = '登陆中';
+        echo json_encode($data);
     }
 }

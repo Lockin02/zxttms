@@ -88,6 +88,23 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 });
             });
 
+            $(document).on('click','.btn-refresh', function(event){
+                $.ajax({
+                    url: 'workinf/checklogin',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {'d': 'value1'},
+                    success:function(data){
+                        if(data['code'] == 0){
+                            location.reload();
+                        }
+                    },
+                    error:function(){
+                        alert('刷新失败');
+                    }
+                })
+            });
+
             // 自定义导出
             $(document).on('click','.btn-myexcelout', function(event){
                 var data = $(':text, select').serializeArray();
