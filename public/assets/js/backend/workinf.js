@@ -88,14 +88,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 });
             });
 
-            $(document).on('click','.btn-refresh', function(event){
+            $(document).on('click','.btn-refresh', function(data){
                 $.ajax({
                     url: 'workinf/checklogin',
                     type: 'GET',
                     dataType: 'json',
                     data: {'d': 'value1'},
                     success:function(data){
-                        if(data['code'] == 0){
+                        if(data['code'] == 0 && data['url'] != ""){
                             location.reload();
                         }
                     },

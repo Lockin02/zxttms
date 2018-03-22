@@ -63,12 +63,10 @@ class Workseq extends Backend
                     ->order($sort, $order)
                     ->limit($offset, $limit)
                     ->select();
-            $sql = $this->model->getlastsql();
             $result = array("total" => $total, "rows" => $list);
 
             return json($result);
         }
         return $this->view->fetch();
     }
-
 }

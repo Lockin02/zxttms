@@ -7,8 +7,6 @@ use app\common\controller\Backend;
 use think\Controller;
 use think\Request;
 use think\Db;
-use PHPEXCEL;
-use PHPExcel_IOFactory;
 
 /**
  * 
@@ -23,6 +21,7 @@ class Workinf extends Backend
      */
     protected $model = null;
     protected $searchFields = 'oper_id';
+    protected $where_condition = [];
 
     public function _initialize()
     {
